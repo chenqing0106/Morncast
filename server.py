@@ -3,6 +3,9 @@ import json
 import os
 import uuid
 
+from dotenv import load_dotenv
+load_dotenv()  # 读取 .env 文件
+
 import edge_tts
 from openai import OpenAI
 from fastapi import FastAPI, HTTPException

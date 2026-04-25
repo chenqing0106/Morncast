@@ -3,3 +3,4 @@ uvicorn[standard]
 openai
 edge-tts
 aiofiles
+python-dotenv
