@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1f14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Morncast · 通勤播客演示</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,500&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0d1f14;
+      --glass: rgba(18, 48, 32, 0.72);
+      --glass-strong: rgba(12, 36, 24, 0.88);
+      --accent: #3d8f6a;
+      --accent-bright: #5cb88a;
+      --text: #f4fbf7;
+      --text-dim: rgba(244, 251, 247, 0.72);
+      --segment-inactive: rgba(255, 255, 255, 0.22);
+      --radius: 18px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --phone-max-w: 430px;
+      font-family: "DM Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      -webkit-text-size-adjust: 100%;
+      background: #050a07;
+    }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      min-height: 100svh;
+      background: #050a07;
+      color: var(--text);
+      overflow-x: hidden;
+      overflow-y: hidden;
+    }
+
+    /* 竖屏手机视口：真机全宽；宽屏居中模拟手机 */
+    .mobile-shell {
+      position: relative;
+      width: 100%;
+      max-width: var(--phone-max-w);
+      height: 100dvh;
+      height: 100svh;
+      max-height: 100dvh;
+      max-height: 100svh;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--bg-deep);
+    }
+
+    @media (min-width: 480px) {
+      .mobile-shell {
+        margin-top: max(12px, env(safe-area-inset-top, 12px));
+        margin-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+        height: calc(100dvh - 24px);
+        max-height: calc(100dvh - 24px);
+        min-height: 0;
+        border-radius: 28px;
+        box-shadow:
+          0 24px 64px rgba(0, 0, 0, 0.45),
+          0 0 0 1px rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 参考原型色调：纯 CSS 渐变 + 光晕，不使用摄影背景图 */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 130% 70% at 50% -15%, rgba(92, 184, 138, 0.35) 0%, transparent 52%),
+        radial-gradient(ellipse 80% 55% at 100% 35%, rgba(61, 143, 106, 0.22) 0%, transparent 48%),
+        radial-gradient(ellipse 75% 60% at -5% 80%, rgba(27, 67, 50, 0.5) 0%, transparent 50%),
+        linear-gradient(168deg, #143824 0%, #0d1f14 38%, #070f0c 100%);
+    }
+    .bg-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(4, 12, 8, 0.65) 100%);
+      opacity: 0.95;
+    }
+
+    /* 横屏短时提示（仍建议竖屏使用） */
+    .landscape-tip {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background: rgba(5, 18, 12, 0.94);
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    @media (orientation: landscape) and (max-height: 480px) {
+      .landscape-tip {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+
+    .status-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: calc(8px + var(--safe-top)) 18px 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+    .status-icons { display: flex; gap: 6px; opacity: 0.9; font-size: 12px; }
+
+    .top-nav {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px 10px;
+    }
+    .icon-btn {
+      width: 40px; height: 40px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .top-tabs {
+      flex: 1;
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 0 4px;
+      mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    }
+    .top-tabs::-webkit-scrollbar { display: none; }
+    .top-tab {
+      white-space: nowrap;
+      font-size: 14px;
+      color: var(--text-dim);
+      padding-bottom: 6px;
+      border-bottom: 3px solid transparent;
+      cursor: default;
+    }
+    .top-tab.active {
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: #fff;
+    }
+
+    /* 横向滑动区 */
+    .carousel-wrap {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+    }
+    .carousel {
+      height: 100%;
+      min-width: 0;
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-scroll-snap-type: x mandatory;
+      scroll-behavior: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      /* 横向滑动交给本层；子页仅认领竖向，避免划不动翻页 */
+      touch-action: pan-x pinch-zoom;
+    }
+    .carousel::-webkit-scrollbar { display: none; }
+
+    .page {
+      flex: 0 0 100%;
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      scroll-snap-align: start;
+      -webkit-scroll-snap-align: start;
+      scroll-snap-stop: normal;
+      padding: 0 16px;
+      padding-bottom: calc(52px + var(--safe-bottom));
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior-y: auto;
+      touch-action: pan-y pinch-zoom;
+    }
+
+    .page-home {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      padding-top: 4px;
+    }
+
+    .hero-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    /* Daily Brief 式首页大卡片：摄影柔焦 + Morncast 森绿罩色 + 玻璃播放钮 */
+    .home-eyebrow {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.42em;
+      color: rgba(196, 225, 208, 0.5);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .hero-brief-card {
+      position: relative;
+      width: 100%;
+      border-radius: 36px;
+      overflow: hidden;
+      min-height: min(58vh, 520px);
+      box-shadow:
+        0 36px 72px rgba(0, 0, 0, 0.42),
+        0 0 0 1px rgba(255, 255, 255, 0.07);
+      touch-action: pan-y pinch-zoom;
+    }
+
+    .hero-brief-media {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .hero-brief-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 40%;
+      transform: scale(1.06);
+      filter: saturate(0.95) brightness(0.72);
+    }
+    .hero-brief-green-mist {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(168deg, rgba(20, 55, 38, 0.35) 0%, rgba(10, 42, 30, 0.62) 42%, rgba(4, 18, 12, 0.9) 100%),
+        radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255, 200, 150, 0.12), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 80% 100%, rgba(61, 143, 106, 0.28), transparent 50%);
+      mix-blend-mode: multiply;
+    }
+    .hero-brief-vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-brief-center {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-54%);
+      text-align: center;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .hero-brief-title {
+      font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+      font-weight: 600;
+      font-size: clamp(26px, 7.5vw, 34px);
+      color: #fafdfb;
+      line-height: 1.38;
+      letter-spacing: 0.06em;
+      font-feature-settings: "kern" 1;
+      text-shadow: 0 2px 28px rgba(0, 0, 0, 0.35);
+    }
+    .hero-brief-title .hero-line { display: block; }
+    .hero-brief-tagline {
+      margin-top: 16px;
+      font-family: "DM Sans", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      color: rgba(230, 248, 238, 0.72);
+      text-transform: uppercase;
+    }
+
+    .hero-brief-waves {
+      position: absolute;
+      left: 22px;
+      right: 96px;
+      bottom: 62px;
+      height: 40px;
+      z-index: 3;
+      opacity: 0.22;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    }
+    .hero-brief-waves .wave-bg {
+      width: 100%;
+      height: 100%;
+    }
+    .app.playing .hero-brief-waves { opacity: 0.5; }
+
+    .hero-brief-foot {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      padding: 13px 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.88);
+      background: rgba(6, 22, 14, 0.38);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .hero-brief-foot .meta-div {
+      width: 1px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .hero-brief-foot span:not(.meta-div) {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .play-fab-glass {
+      position: absolute;
+      right: 20px;
+      bottom: 64px;
+      z-index: 4;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      touch-action: manipulation;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:
+        0 12px 36px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+    .play-fab-glass:active { transform: scale(0.94); }
+    .app.playing .play-fab-glass {
+      background: rgba(255, 255, 255, 0.28);
+      border-color: rgba(180, 235, 210, 0.45);
+    }
+    .play-fab-icon {
+      font-size: 26px;
+      margin-left: 3px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+    }
+    .app.playing .play-fab-icon {
+      margin-left: 0;
+      font-size: 20px;
+      letter-spacing: -2px;
+    }
+
+    .glass-card {
+      background: var(--glass);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      touch-action: pan-y pinch-zoom;
+    }
+
+    .hero-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .hero-title {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    .tag-ai {
+      flex-shrink: 0;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .info-cell {
+      text-align: center;
+      padding: 8px 4px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 12px;
+    }
+    .info-cell .v { font-size: 13px; font-weight: 700; }
+    .info-cell .k { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 88px;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .summary-text {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-dim);
+    }
+    .summary-text .sparkle { margin-right: 4px; }
+    .mini-route {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 9px;
+      color: var(--text-dim);
+      gap: 4px;
+    }
+    .mini-route svg { width: 100%; height: 52px; }
+
+    .wave-bg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 0 20px;
+    }
+    .wave-bar {
+      width: 4px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+      animation: wave 1.2s ease-in-out infinite;
+      opacity: 0.85;
+      transform: scaleY(var(--s, 0.35));
+    }
+    .wave-bar:nth-child(odd) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3n) { animation-delay: 0.25s; }
+    .app:not(.playing) .wave-bar { animation: none; transform: scaleY(0.2); opacity: 0.35; }
+    .hero-brief-waves .wave-bar {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(200, 235, 215, 0.35));
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.25); }
+      50% { transform: scaleY(1); }
+    }
+
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-track {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.15);
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+      pointer-events: none;
+    }
+
+    .transcript-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .transcript-toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .transcript-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-icon-ghost {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.15);
+      color: var(--text);
+      font-size: 17px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .btn-outline {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .transcript-status {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 20px 0 12px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .list-card {
+      display: grid;
+      grid-template-columns: 1fr 76px;
+      gap: 14px;
+      align-items: stretch;
+      padding: 14px 14px 14px 16px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, rgba(22, 56, 40, 0.65) 0%, rgba(14, 40, 28, 0.78) 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+      touch-action: pan-y pinch-zoom;
+    }
+    .list-card .feed-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+    }
+    .list-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+    .author-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px 3px 4px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.22);
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(230, 245, 236, 0.9);
+    }
+    .snippet-line {
+      flex: 1 1 100%;
+      font-size: 11px;
+      color: rgba(244, 251, 247, 0.55);
+      line-height: 1.45;
+    }
+    .avatar {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5cb88a, #2d6a4f);
+    }
+    .thumb {
+      width: 76px;
+      min-height: 102px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+      align-self: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+    }
+    .thumb-play {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.95);
+      color: #1b4332;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      z-index: 1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .thumb.t1 { background: linear-gradient(160deg, #1b4332, #40916c); }
+    .thumb.t2 { background: linear-gradient(160deg, #344e41, #a3b18a); }
+    .thumb.t3 { background: linear-gradient(160deg, #0d3b2e, #52b788); }
+    .thumb.t4 { background: linear-gradient(160deg, #1d3557, #457b9d); }
+
+    .page-sources .section-title,
+    .page-rec .section-title {
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(200, 230, 210, 0.65);
+    }
+
+    .chapter-list { display: flex; flex-direction: column; gap: 8px; }
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.18);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .chapter-item:hover, .chapter-item:focus-visible {
+      border-color: rgba(255,255,255,0.2);
+      outline: none;
+    }
+    .chapter-item.active-chapter {
+      background: rgba(92, 184, 138, 0.25);
+      border-color: rgba(92, 184, 138, 0.5);
+    }
+    .chapter-time {
+      font-size: 12px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-bright);
+      min-width: 52px;
+    }
+    .chapter-name { font-size: 13px; font-weight: 600; }
+
+    .transcript-panel {
+      position: relative;
+      min-height: min(52dvh, 420px);
+      margin-top: 0;
+    }
+    .transcript {
+      margin-top: 0;
+      max-height: min(52dvh, 420px);
+      min-height: min(52dvh, 420px);
+      overflow-y: auto;
+      padding-right: 4px;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y pinch-zoom;
+    }
+
+    /* 章节大纲：覆盖在逐字稿区域上方 */
+    .outline-drawer {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 12px 10px;
+      box-sizing: border-box;
+      border-radius: 16px;
+      background: rgba(8, 32, 22, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.26s ease, visibility 0.26s ease;
+    }
+    .outline-drawer.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .outline-drawer-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+      border: none;
+      padding: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .outline-drawer-card h2 {
+      font-size: 16px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+    .outline-drawer-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+    #chapterListModal {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y pinch-zoom;
+    }
+    .outline-drawer-actions {
+      flex-shrink: 0;
+      margin-top: 12px;
+    }
+    .transcript-line {
+      font-size: 14px;
+      line-height: 1.65;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      border-radius: 10px;
+      color: var(--text-dim);
+      border-left: 3px solid transparent;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .transcript-line.active {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+      border-left-color: var(--accent-bright);
+    }
+
+    .bottom-ui {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      padding: 8px 16px calc(10px + var(--safe-bottom));
+      background: linear-gradient(180deg, transparent, rgba(5, 18, 12, 0.94) 35%);
+      pointer-events: none;
+    }
+    .bottom-ui > * { pointer-events: auto; }
+
+    .segment-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 0;
+    }
+    .segment {
+      flex: 1;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--segment-inactive);
+      cursor: pointer;
+      transition: height 0.2s, background 0.2s;
+      touch-action: manipulation;
+    }
+    .segment.active {
+      height: 6px;
+      background: #fff;
+      margin-top: -1px;
+    }
+
+    .swipe-hint-mini {
+      text-align: center;
+      font-size: 10px;
+      color: rgba(244, 251, 247, 0.45);
+      margin-top: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    /* 模态：设置 */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 20;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    #modalSettings { z-index: 24; }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 480px;
+      background: #122b1f;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 20px calc(24px + var(--safe-bottom));
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-sheet h2 { font-size: 17px; margin-bottom: 16px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+    .field input[type="range"] { width: 100%; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pill.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .modal-actions { margin-top: 18px; display: flex; gap: 10px; }
+    .modal-actions button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-close-sheet { background: rgba(255,255,255,0.12); color: #fff; }
+
+    .feed-index {
+      font-size: 11px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: rgba(92, 184, 138, 0.85);
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .list-card .feed-body { min-width: 0; padding-right: 12px; padding-top: 2px; }
+    /* 收藏来源：黄色实心星 = 取消本条收录 */
+    .btn-star-remove {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(232, 185, 35, 0.45);
+      background: rgba(22, 18, 6, 0.55);
+      cursor: pointer;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-star-remove:active {
+      background: rgba(50, 40, 8, 0.75);
+      transform: scale(0.96);
+    }
+    .btn-star-remove .icon-star path {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+    }
+    /* 推荐页缩略图：空心 / 实心收藏星 */
+    .thumb-fav {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      z-index: 2;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(0, 0, 0, 0.42);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .thumb-fav .icon-star path {
+      transition: fill 0.2s ease, stroke 0.2s ease;
+    }
+    .thumb-fav.is-saved {
+      background: rgba(40, 32, 6, 0.65);
+    }
+    .thumb-fav.is-saved .icon-star path {
+      fill: #F0C330;
+      stroke: #D4A017;
+      stroke-width: 0.5;
+    }
+    .thumb-fav:not(.is-saved) .icon-star path {
+      fill: none;
+      stroke: #F0C330;
+      stroke-width: 1.65;
+      stroke-linejoin: round;
+    }
+    .list-card { position: relative; }
+
+    .sources-toolbar {
+      margin-bottom: 12px;
+    }
+    .btn-clear-sources {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 160, 140, 0.4);
+      background: rgba(48, 20, 16, 0.35);
+      color: rgba(255, 215, 205, 0.95);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      touch-action: manipulation;
+    }
+    .btn-clear-sources:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .source-empty-hint {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-dim);
+      padding: 28px 12px;
+      line-height: 1.5;
+    }
+
+    .page-indicator {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-shell" id="mobileShell">
+    <div class="bg-layer" aria-hidden="true"></div>
+    <div class="landscape-tip" role="status">
+      <strong>请旋转手机至竖屏</strong>
+      <span style="font-size:13px;color:var(--text-dim)">Morncast 为竖屏通勤场景设计</span>
+    </div>
+
+    <div class="app" id="app">
+    <header class="status-bar">
+      <span id="clock">09:41</span>
+      <span class="status-icons">●●●●○ 📶 🔋</span>
+    </header>
+
+    <nav class="top-nav" aria-label="顶部导航">
+      <button type="button" class="icon-btn" aria-label="菜单">☰</button>
+      <div class="top-tabs">
+        <span class="top-tab">团购</span>
+        <span class="top-tab">经验</span>
+        <span class="top-tab">北京</span>
+        <span class="top-tab">关注</span>
+        <span class="top-tab">商城</span>
+        <span class="top-tab active">推荐</span>
+      </div>
+      <button type="button" class="icon-btn" aria-label="搜索">⌕</button>
+    </nav>
+
+    <div class="carousel-wrap">
+      <div class="carousel" id="carousel" role="region" aria-label="Morncast 内容滑动区">
+
+        <!-- 第 1 页：Daily Brief 式简报卡 + 玻璃播放 -->
+        <section class="page page-home" data-page="0" aria-label="播放">
+          <div class="hero-stack">
+            <p class="home-eyebrow">Morncast</p>
+            <article class="hero-brief-card">
+              <div class="hero-brief-media" aria-hidden="true">
+                <img class="hero-brief-photo" src="assets/hero-daily-brief.png" alt="" width="800" height="1200" decoding="async" fetchpriority="high" />
+                <div class="hero-brief-green-mist"></div>
+                <div class="hero-brief-vignette"></div>
+              </div>
+              <div class="hero-brief-center">
+                <h1 class="hero-brief-title">
+                  <span class="hero-line">早安，</span>
+                  <span class="hero-line">通勤路上。</span>
+                </h1>
+                <p class="hero-brief-tagline">稍后再看 · 现在就听</p>
+              </div>
+              <div class="hero-brief-waves" aria-hidden="true">
+                <div class="wave-bg" id="waveBars"></div>
+              </div>
+              <footer class="hero-brief-foot">
+                <span>☼ 本期</span>
+                <span class="meta-div" aria-hidden="true"></span>
+                <span>18:32</span>
+                <span class="meta-div" aria-hidden="true"></span>
+                <span>4 条来源</span>
+                <span class="meta-div" aria-hidden="true"></span>
+                <span>耳机就绪</span>
+              </footer>
+              <button type="button" class="play-fab-glass" id="btnPlayMain" aria-label="播放或暂停">
+                <span class="play-fab-icon" id="playFabIcon">▶</span>
+              </button>
+            </article>
+          </div>
+        </section>
+
+        <!-- 第 2 页：逐字稿；章节大纲在逐字稿下方展开 -->
+        <section class="page page-transcript" data-page="1" aria-label="逐字稿">
+          <div class="glass-card transcript-toolbar">
+            <div class="transcript-toolbar-row">
+              <button type="button" class="btn-outline" id="btnOpenOutline">章节大纲</button>
+              <div class="transcript-toolbar-actions">
+                <span class="transcript-status"><span id="timeCurrent">00:00</span> / <span id="timeTotal">18:32</span></span>
+                <button type="button" class="btn-icon-ghost" id="btnSettings" aria-label="播放设置">⚙</button>
+              </div>
+            </div>
+            <div class="progress-track" id="mainProgress" role="slider" aria-valuemin="0" aria-valuemax="1112" aria-valuenow="0" tabindex="0">
+              <div class="progress-fill" id="mainProgressFill"></div>
+            </div>
+          </div>
+          <div class="section-title">逐字稿</div>
+          <div class="transcript-panel">
+            <div class="transcript" id="transcript"></div>
+            <div class="outline-drawer" id="outlineDrawer" aria-hidden="true">
+              <div class="outline-drawer-card">
+                <h2 id="outlineTitle">章节大纲</h2>
+                <p class="outline-drawer-hint">点击章节跳转播放；当前章节会随进度高亮。</p>
+                <div class="chapter-list" id="chapterListModal"></div>
+                <div class="modal-actions outline-drawer-actions">
+                  <button type="button" class="btn-close-sheet" id="btnCloseOutline">收起</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 第 3 页：收藏来源 -->
+        <section class="page page-sources" data-page="2" aria-label="收藏来源">
+          <div class="glass-card" style="margin-bottom:10px;padding:14px 16px">
+            <h2 class="hero-title" style="font-size:17px;margin-bottom:8px">稍后再看 · 本期收录</h2>
+            <p class="summary-text" style="margin:0">来自你主动收藏的知识向内容；点击黄色星标可从列表移除（演示）。</p>
+          </div>
+          <div class="section-title">来源</div>
+          <div class="sources-toolbar">
+            <button type="button" class="btn-clear-sources" id="btnClearAllSources">一键取消全部收藏</button>
+          </div>
+          <div id="sourceList"></div>
+        </section>
+
+        <!-- 第 4 页：推荐 -->
+        <section class="page page-rec" data-page="3" aria-label="推荐">
+          <div class="glass-card" style="margin-bottom:10px;padding:14px 16px">
+            <h2 class="hero-title" style="font-size:17px;margin-bottom:8px">延伸推荐</h2>
+            <p class="summary-text" style="margin:0">与本期话题相关的更多视频，点击缩略图即可跳转（演示）。</p>
+          </div>
+          <div class="section-title">推荐</div>
+          <div id="recList"></div>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="bottom-ui">
+      <div class="page-indicator" id="pageLabel">第 1 / 4 页 · 播放</div>
+      <div class="segment-bar" id="segmentBar" role="tablist" aria-label="页面进度"></div>
+      <p class="swipe-hint-mini">左右滑动 · 共四页</p>
+    </div>
+    </div>
+
+    <div class="modal-backdrop" id="modalSettings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-sheet">
+        <h2 id="settingsTitle">播放设置</h2>
+        <div class="field">
+          <label for="durationCap">本期最大时长偏好（演示）</label>
+          <input type="range" id="durationCap" min="5" max="30" value="20" />
+          <div style="font-size:12px;color:var(--text-dim);margin-top:4px">当前上限：<span id="durationCapVal">20</span> 分钟</div>
+        </div>
+        <div class="field">
+          <label>倍速</label>
+          <div class="pill-row" id="speedPills"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-close-sheet" id="btnCloseSettings">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const TOTAL_SEC = 18 * 60 + 32;
+  const carousel = document.getElementById("carousel");
+  const app = document.getElementById("app");
+  const segmentBar = document.getElementById("segmentBar");
+  const pageLabel = document.getElementById("pageLabel");
+  const labels = [
+    "第 1 / 4 页 · 播放",
+    "第 2 / 4 页 · 逐字稿",
+    "第 3 / 4 页 · 收藏来源",
+    "第 4 / 4 页 · 推荐",
+  ];
+
+  const chapters = [
+    { start: 0, title: "开场：为什么「稍后再看」总是吃灰" },
+    { start: 165, title: "多模态产品落地的三条路径" },
+    { start: 420, title: "创业团队如何选模型与评估 ROI" },
+    { start: 780, title: "结尾：把通勤变成你的「第二阅读时间」" },
+  ];
+
+  const transcriptLines = [
+    { start: 0, text: "早上好，欢迎收听 Morncast。这一期我们把昨晚你划过去的那几条收藏，串成一条能听完就懂的主线。" },
+    { start: 18, text: "很多人不是不学习，而是视频需要眼睛盯着屏幕；通勤时耳朵空着，眼睛却要盯路况——所以我们做播客化。" },
+    { start: 38, text: "第一条来源聊的是多模态：不是「会不会画图」，而是工作流里哪一环能被视觉理解真正省掉人力。" },
+    { start: 58, text: "作者提到三个信号：交互从表单变成对话，评测从准确率变成任务完成率，交付从 Demo 变成可回滚的生产变更。" },
+    { start: 82, text: "第二条更偏创业：团队问的最多的不是参数量，而是「我们这条业务链路的瓶颈到底在数据、评测还是集成」。" },
+    { start: 108, text: "如果一句话总结：选模型之前，先选指标；选指标之前，先选场景里谁为结果负责。" },
+    { start: 132, text: "第三条谈到注意力经济：收藏是一种承诺，但承诺需要「低摩擦的兑现方式」。播客就是把兑现摩擦降到耳机里。" },
+    { start: 156, text: "好，进入第一个章节节点——多模态产品落地。我们不会复述视频画面，而是提炼你可执行的判断题。" },
+    { start: 185, text: "判断题一：你的用户是愿意多打一句话，还是愿意多点三下？这决定你是对话优先还是表单优先。" },
+    { start: 210, text: "判断题二：错误成本高不高？高的话，别急着端到端生成，先做「人机共治」的审核与回滚。" },
+    { start: 240, text: "判断题三：你有没有「黄金集」？没有评测集，模型迭代只是在换运气。" },
+    { start: 275, text: "很多团队把「能跑」当「能用」。作者建议用两周时间做一件小事：把失败案例分类，你会看到真正的产品坑。" },
+    { start: 305, text: "接下来这段来自一位连续创业者的复盘：为什么他们在第二年才把模型从「最大」换成「最合适」。" },
+    { start: 340, text: "核心观点是：早期要的是迭代速度，不是榜单分数；当你一周要改十次提示词，成本和延迟比参数更重要。" },
+    { start: 385, text: "他们还分享了一个反直觉做法：把「最会挑错的人」放进每周例会，专门负责找模型的「社死瞬间」。" },
+    { start: 430, text: "进入第三章节：ROI。别问「AI 能做什么」，问「哪一步节省的时间可以直接换算成钱或风险」。" },
+    { start: 465, text: "如果节省的是高管时间，记得算机会成本；如果节省的是一线重复劳动，记得算离职率与培训成本。" },
+    { start: 505, text: "作者给了一个简单表格：场景、输入、输出、失败模式、负责人。没有负责人就不立项。" },
+    { start: 550, text: "你也可能会问：那我不是目标用户吗？如果你收藏里只有娱乐向内容，Morncast 会诚实地说——本期可能不适合你。" },
+    { start: 590, text: "我们更在意的是：把那些「你觉得重要」但「永远排不上日程」的东西，变成你能听完的版本。" },
+    { start: 640, text: "技术实现上，夜间我们会拉取你认可过的条目，做理解与聚类，再生成脚本与音频。你打开时，只需要按播放。" },
+    { start: 690, text: "这并不是替代原视频：你可以在来源页点回去，把细节补全；播客负责给你地图，视频负责给你街景。" },
+    { start: 740, text: "如果你正在开车，请注意安全。我们在文案里避免让你必须看屏幕才能完成理解。" },
+    { start: 790, text: "好，来到收尾。今天你可以带走三句话：先场景后模型；先评测后扩参；先兑现收藏，再追新热点。" },
+    { start: 830, text: "明天同一时间，我们会把「设计与人机协作」这个话题做成通勤版。你也可以在设置里调整时长上限。" },
+    { start: 870, text: "感谢收听 Morncast。愿你今天的路，少堵一点，多想一点。我们下期见。" },
+  ];
+
+  const SOURCES_INITIAL = [
+    { id: "s1", title: "多模态不是炫技：三个落地信号", author: "硅谷徐老师", snippet: "从表单到对话，从准确率到任务完成率。", thumb: "t1" },
+    { id: "s2", title: "创业团队选模型的投入产出清单", author: "产品夜航船", snippet: "别问参数量，先问谁为结果负责。", thumb: "t2" },
+    { id: "s3", title: "注意力经济：收藏为什么总吃灰", author: "认知复利", snippet: "收藏是承诺，承诺需要低摩擦兑现。", thumb: "t3" },
+    { id: "s4", title: "评测集怎么做才算真正可迭代", author: "ML 工程实录", snippet: "两周只做一件事：失败案例分类。", thumb: "t4" },
+  ];
+  let sourcesList = SOURCES_INITIAL.map((s) => Object.assign({}, s));
+
+  const STAR_PATH = "M12 2.25l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2.25z";
+  function svgStarSolid() {
+    return `<svg class="icon-star" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#F0C330" stroke="#C9A012" stroke-width="0.35" d="${STAR_PATH}"/></svg>`;
+  }
+  function svgStarOutline() {
+    return `<svg class="icon-star" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="none" stroke="#F0C330" stroke-width="1.65" stroke-linejoin="round" d="${STAR_PATH}"/></svg>`;
+  }
+
+  const recommendations = [
+    { id: "r1", title: "一文读懂：大模型落地的评测优先思路", author: "极客公园", snippet: "把社死瞬间写进每周例会。", thumb: "t2" },
+    { id: "r2", title: "对话式交互什么时候会害了你", author: "UX 小报", snippet: "高错误成本场景的人机共治。", thumb: "t1" },
+    { id: "r3", title: "创业者的数据飞轮：从 0 到 1", author: "创业内幕", snippet: "别急着扩参，先扩场景。", thumb: "t3" },
+    { id: "r4", title: "通勤学习：如何把碎片时间变成系统输入", author: "深度工作间", snippet: "耳机里的地图，屏幕里的街景。", thumb: "t4" },
+  ];
+
+  let currentSec = 0;
+  let playing = false;
+  let rafId = null;
+  let lastTs = 0;
+  let playbackRate = 1.1;
+  let lastTranscriptActiveIdx = -1;
+  let transcriptTouchLockUntil = 0;
+  let programmaticTranscriptScroll = false;
+
+  function pad(n) { return String(Math.floor(n)).padStart(2, "0"); }
+  function fmt(sec) {
+    sec = Math.min(Math.max(sec, 0), TOTAL_SEC);
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return pad(m) + ":" + pad(s);
+  }
+
+  function buildWaveBars() {
+    const el = document.getElementById("waveBars");
+    const n = 40;
+    for (let i = 0; i < n; i++) {
+      const b = document.createElement("div");
+      b.className = "wave-bar";
+      b.style.setProperty("--s", (0.25 + Math.random() * 0.75).toFixed(2));
+      b.style.animationDelay = (i * 0.04) + "s";
+      el.appendChild(b);
+    }
+  }
+
+  function closeOutlineDrawer() {
+    const d = document.getElementById("outlineDrawer");
+    d.classList.remove("is-open");
+    d.setAttribute("aria-hidden", "true");
+  }
+
+  function openOutlineDrawer() {
+    const d = document.getElementById("outlineDrawer");
+    d.classList.add("is-open");
+    d.setAttribute("aria-hidden", "false");
+  }
+
+  function renderChapters() {
+    const list = document.getElementById("chapterListModal");
+    list.innerHTML = "";
+    chapters.forEach((c, i) => {
+      const div = document.createElement("button");
+      div.type = "button";
+      div.className = "chapter-item";
+      div.dataset.index = String(i);
+      div.innerHTML = `<span class="chapter-time">${fmt(c.start)}</span><span class="chapter-name">${c.title}</span>`;
+      div.addEventListener("click", () => {
+        seekTo(c.start);
+        closeOutlineDrawer();
+      });
+      list.appendChild(div);
+    });
+  }
+
+  function renderTranscript() {
+    const t = document.getElementById("transcript");
+    transcriptLines.forEach((line, i) => {
+      const div = document.createElement("p");
+      div.className = "transcript-line";
+      div.dataset.index = String(i);
+      div.dataset.start = String(line.start);
+      div.textContent = line.text;
+      t.appendChild(div);
+    });
+  }
+
+  function updateClearSourcesButton() {
+    const btn = document.getElementById("btnClearAllSources");
+    if (btn) btn.disabled = sourcesList.length === 0;
+  }
+
+  function renderSources() {
+    const wrap = document.getElementById("sourceList");
+    wrap.innerHTML = "";
+    if (sourcesList.length === 0) {
+      wrap.innerHTML = "<p class=\"source-empty-hint\">暂无收录内容。</p>";
+      updateClearSourcesButton();
+      return;
+    }
+    sourcesList.forEach((item, idx) => {
+      const card = document.createElement("article");
+      card.className = "list-card";
+      card.dataset.id = item.id;
+      card.innerHTML = `
+        <button type="button" class="btn-star-remove" title="取消收录" aria-label="取消本条收藏">${svgStarSolid()}</button>
+        <div class="feed-body">
+          <div class="feed-index">第 ${String(idx + 1).padStart(2, "0")} 条</div>
+          <h3 class="feed-title">${item.title}</h3>
+          <div class="list-meta">
+            <span class="author-pill"><span class="avatar" aria-hidden="true"></span>${item.author}</span>
+            <span class="snippet-line">${item.snippet}</span>
+          </div>
+        </div>
+        <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图"><span class="thumb-play" aria-hidden="true">▶</span></div>
+      `;
+      card.querySelector(".btn-star-remove").addEventListener("click", (e) => {
+        e.stopPropagation();
+        sourcesList = sourcesList.filter((s) => s.id !== item.id);
+        renderSources();
+      });
+      wrap.appendChild(card);
+    });
+    updateClearSourcesButton();
+  }
+
+  function renderRecs() {
+    const wrap = document.getElementById("recList");
+    recommendations.forEach((item, idx) => {
+      const card = document.createElement("article");
+      card.className = "list-card";
+      card.innerHTML = `
+        <div class="feed-body">
+          <div class="feed-index">推荐 ${String(idx + 1).padStart(2, "0")}</div>
+          <h3 class="feed-title">${item.title}</h3>
+          <div class="list-meta">
+            <span class="author-pill"><span class="avatar" aria-hidden="true"></span>${item.author}</span>
+            <span class="snippet-line">${item.snippet}</span>
+          </div>
+        </div>
+        <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图">
+          <button type="button" class="thumb-fav" aria-label="收藏" aria-pressed="false">${svgStarOutline()}</button>
+          <span class="thumb-play" aria-hidden="true">▶</span>
+        </div>
+      `;
+      const fav = card.querySelector(".thumb-fav");
+      fav.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const saved = fav.classList.toggle("is-saved");
+        fav.setAttribute("aria-pressed", saved ? "true" : "false");
+        fav.setAttribute("aria-label", saved ? "已收藏，点击取消" : "收藏");
+        fav.innerHTML = saved ? svgStarSolid() : svgStarOutline();
+      });
+      wrap.appendChild(card);
+    });
+  }
+
+  function scrollLineIntoTranscriptViewport(container, child) {
+    if (!container || !child) return;
+    const cr = container.getBoundingClientRect();
+    const er = child.getBoundingClientRect();
+    const pad = 10;
+    let delta = 0;
+    if (er.top < cr.top + pad) delta = er.top - cr.top - pad;
+    else if (er.bottom > cr.bottom - pad) delta = er.bottom - cr.bottom + pad;
+    if (delta === 0) return;
+    programmaticTranscriptScroll = true;
+    container.scrollTop += delta;
+    requestAnimationFrame(() => {
+      programmaticTranscriptScroll = false;
+    });
+  }
+
+  function updateProgressUI() {
+    const p = (currentSec / TOTAL_SEC) * 100;
+    const fill = document.getElementById("mainProgressFill");
+    if (fill) fill.style.width = p + "%";
+    const tc = document.getElementById("timeCurrent");
+    if (tc) tc.textContent = fmt(currentSec);
+    const mp = document.getElementById("mainProgress");
+    if (mp) mp.setAttribute("aria-valuenow", String(Math.floor(currentSec)));
+
+    let activeIdx = -1;
+    for (let i = 0; i < transcriptLines.length; i++) {
+      const next = transcriptLines[i + 1];
+      const end = next ? next.start : TOTAL_SEC;
+      if (currentSec >= transcriptLines[i].start && currentSec < end) activeIdx = i;
+    }
+    document.querySelectorAll(".transcript-line").forEach((el, i) => {
+      el.classList.toggle("active", i === activeIdx);
+    });
+
+    if (activeIdx >= 0 && activeIdx !== lastTranscriptActiveIdx) {
+      lastTranscriptActiveIdx = activeIdx;
+      const container = document.getElementById("transcript");
+      const activeEl = container && container.querySelector(`.transcript-line[data-index="${activeIdx}"]`);
+      if (container && activeEl && Date.now() > transcriptTouchLockUntil) {
+        scrollLineIntoTranscriptViewport(container, activeEl);
+      }
+    }
+    if (activeIdx < 0) lastTranscriptActiveIdx = -1;
+
+    chapters.forEach((c, i) => {
+      const next = chapters[i + 1];
+      const end = next ? next.start : TOTAL_SEC;
+      const on = currentSec >= c.start && currentSec < end;
+      const btn = document.querySelectorAll("#chapterListModal .chapter-item")[i];
+      if (btn) btn.classList.toggle("active-chapter", on);
+    });
+  }
+
+  function seekTo(sec) {
+    currentSec = Math.min(Math.max(sec, 0), TOTAL_SEC);
+    lastTranscriptActiveIdx = -1;
+    updateProgressUI();
+  }
+
+  function togglePlay() {
+    playing = !playing;
+    app.classList.toggle("playing", playing);
+    const icon = document.getElementById("playFabIcon");
+    if (icon) icon.textContent = playing ? "❚❚" : "▶";
+    if (playing) {
+      lastTs = performance.now();
+      const tick = (ts) => {
+        if (!playing) return;
+        const dt = (ts - lastTs) / 1000;
+        lastTs = ts;
+        currentSec += dt * playbackRate;
+        if (currentSec >= TOTAL_SEC) {
+          currentSec = TOTAL_SEC;
+          togglePlay();
+        }
+        updateProgressUI();
+        rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+    } else if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function buildSegments() {
+    segmentBar.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      const s = document.createElement("button");
+      s.type = "button";
+      s.className = "segment" + (i === 0 ? " active" : "");
+      s.setAttribute("aria-label", "转到第 " + (i + 1) + " 页");
+      s.addEventListener("click", () => {
+        carousel.scrollTo({ left: i * carousel.clientWidth, behavior: "auto" });
+      });
+      segmentBar.appendChild(s);
+    }
+  }
+
+  function onScroll() {
+    const i = Math.round(carousel.scrollLeft / carousel.clientWidth);
+    document.querySelectorAll(".segment").forEach((seg, idx) => seg.classList.toggle("active", idx === i));
+    pageLabel.textContent = labels[i] || labels[0];
+  }
+
+  function setupProgressSeek() {
+    const track = document.getElementById("mainProgress");
+    if (!track) return;
+    const setFromClientX = (clientX) => {
+      const r = track.getBoundingClientRect();
+      const ratio = Math.min(Math.max((clientX - r.left) / r.width, 0), 1);
+      seekTo(ratio * TOTAL_SEC);
+    };
+    track.addEventListener("click", (e) => setFromClientX(e.clientX));
+    let drag = false;
+    track.addEventListener("pointerdown", (e) => { drag = true; track.setPointerCapture(e.pointerId); setFromClientX(e.clientX); });
+    track.addEventListener("pointermove", (e) => { if (drag) setFromClientX(e.clientX); });
+    track.addEventListener("pointerup", () => { drag = false; });
+    track.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") seekTo(currentSec + 15);
+      if (e.key === "ArrowLeft") seekTo(currentSec - 15);
+    });
+  }
+
+  function setupSpeedPills() {
+    const speeds = [0.9, 1.0, 1.1, 1.25, 1.5];
+    const row = document.getElementById("speedPills");
+    speeds.forEach((sp) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pill" + (sp === playbackRate ? " selected" : "");
+      b.textContent = sp + "×";
+      b.addEventListener("click", () => {
+        playbackRate = sp;
+        row.querySelectorAll(".pill").forEach((p) => p.classList.remove("selected"));
+        b.classList.add("selected");
+        updateProgressUI();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  document.getElementById("btnPlayMain").addEventListener("click", togglePlay);
+
+  document.getElementById("btnClearAllSources").addEventListener("click", () => {
+    if (sourcesList.length === 0) return;
+    sourcesList = [];
+    renderSources();
+  });
+
+  document.getElementById("btnSettings").addEventListener("click", () => {
+    document.getElementById("modalSettings").classList.add("open");
+  });
+
+  document.getElementById("btnOpenOutline").addEventListener("click", () => {
+    const d = document.getElementById("outlineDrawer");
+    if (d.classList.contains("is-open")) closeOutlineDrawer();
+    else openOutlineDrawer();
+  });
+  document.getElementById("btnCloseOutline").addEventListener("click", closeOutlineDrawer);
+
+  const transcriptEl = document.getElementById("transcript");
+  transcriptEl.addEventListener("touchstart", () => {
+    transcriptTouchLockUntil = Date.now() + 1600;
+  }, { passive: true });
+  transcriptEl.addEventListener("wheel", () => {
+    transcriptTouchLockUntil = Date.now() + 1000;
+  }, { passive: true });
+
+  document.getElementById("btnCloseSettings").addEventListener("click", () => {
+    document.getElementById("modalSettings").classList.remove("open");
+  });
+  document.getElementById("modalSettings").addEventListener("click", (e) => {
+    if (e.target.id === "modalSettings") document.getElementById("modalSettings").classList.remove("open");
+  });
+
+  const cap = document.getElementById("durationCap");
+  const capVal = document.getElementById("durationCapVal");
+  cap.addEventListener("input", () => { capVal.textContent = cap.value; });
+
+  carousel.addEventListener("scroll", onScroll, { passive: true });
+
+  buildWaveBars();
+  buildSegments();
+  renderChapters();
+  renderTranscript();
+  renderSources();
+  renderRecs();
+  setupProgressSeek();
+  setupSpeedPills();
+  updateProgressUI();
+
+  function tickClock() {
+    const d = new Date();
+    document.getElementById("clock").textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  tickClock();
+  setInterval(tickClock, 30000);
+})();
+  </script>
+</body>
+</html>
