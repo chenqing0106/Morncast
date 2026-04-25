@@ -1148,11 +1148,21 @@
         </div>
       </div>
     </div>
+    <div id="loadingMask" style="position:absolute;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,10,7,0.92);color:#f4fbf7;font-family:'DM Sans','PingFang SC',sans-serif;">
+      <div style="font-size:14px;letter-spacing:0.18em;opacity:0.7;text-transform:uppercase;">Morncast</div>
+      <div id="loadingText" style="margin-top:14px;font-size:15px;opacity:0.85;">正在为你生成今日播客…</div>
+      <div style="margin-top:10px;font-size:12px;opacity:0.5;">首次约 10–20 秒，请稍候</div>
+    </div>
   </div>
+
+  <audio id="audioEl" preload="metadata" style="display:none"></audio>
 
   <script>
 (function () {
-  const TOTAL_SEC = 18 * 60 + 32;
+  let TOTAL_SEC = 0;
+  const audioEl = document.getElementById("audioEl");
+  const loadingMask = document.getElementById("loadingMask");
+  const loadingText = document.getElementById("loadingText");
   const carousel = document.getElementById("carousel");
   const app = document.getElementById("app");
   const segmentBar = document.getElementById("segmentBar");
@@ -1164,49 +1174,9 @@
     "第 4 / 4 页 · 推荐",
   ];
 
-  const chapters = [
-    { start: 0, title: "开场：为什么「稍后再看」总是吃灰" },
-    { start: 165, title: "多模态产品落地的三条路径" },
-    { start: 420, title: "创业团队如何选模型与评估 ROI" },
-    { start: 780, title: "结尾：把通勤变成你的「第二阅读时间」" },
-  ];
-
-  const transcriptLines = [
-    { start: 0, text: "早上好，欢迎收听 Morncast。这一期我们把昨晚你划过去的那几条收藏，串成一条能听完就懂的主线。" },
-    { start: 18, text: "很多人不是不学习，而是视频需要眼睛盯着屏幕；通勤时耳朵空着，眼睛却要盯路况——所以我们做播客化。" },
-    { start: 38, text: "第一条来源聊的是多模态：不是「会不会画图」，而是工作流里哪一环能被视觉理解真正省掉人力。" },
-    { start: 58, text: "作者提到三个信号：交互从表单变成对话，评测从准确率变成任务完成率，交付从 Demo 变成可回滚的生产变更。" },
-    { start: 82, text: "第二条更偏创业：团队问的最多的不是参数量，而是「我们这条业务链路的瓶颈到底在数据、评测还是集成」。" },
-    { start: 108, text: "如果一句话总结：选模型之前，先选指标；选指标之前，先选场景里谁为结果负责。" },
-    { start: 132, text: "第三条谈到注意力经济：收藏是一种承诺，但承诺需要「低摩擦的兑现方式」。播客就是把兑现摩擦降到耳机里。" },
-    { start: 156, text: "好，进入第一个章节节点——多模态产品落地。我们不会复述视频画面，而是提炼你可执行的判断题。" },
-    { start: 185, text: "判断题一：你的用户是愿意多打一句话，还是愿意多点三下？这决定你是对话优先还是表单优先。" },
-    { start: 210, text: "判断题二：错误成本高不高？高的话，别急着端到端生成，先做「人机共治」的审核与回滚。" },
-    { start: 240, text: "判断题三：你有没有「黄金集」？没有评测集，模型迭代只是在换运气。" },
-    { start: 275, text: "很多团队把「能跑」当「能用」。作者建议用两周时间做一件小事：把失败案例分类，你会看到真正的产品坑。" },
-    { start: 305, text: "接下来这段来自一位连续创业者的复盘：为什么他们在第二年才把模型从「最大」换成「最合适」。" },
-    { start: 340, text: "核心观点是：早期要的是迭代速度，不是榜单分数；当你一周要改十次提示词，成本和延迟比参数更重要。" },
-    { start: 385, text: "他们还分享了一个反直觉做法：把「最会挑错的人」放进每周例会，专门负责找模型的「社死瞬间」。" },
-    { start: 430, text: "进入第三章节：ROI。别问「AI 能做什么」，问「哪一步节省的时间可以直接换算成钱或风险」。" },
-    { start: 465, text: "如果节省的是高管时间，记得算机会成本；如果节省的是一线重复劳动，记得算离职率与培训成本。" },
-    { start: 505, text: "作者给了一个简单表格：场景、输入、输出、失败模式、负责人。没有负责人就不立项。" },
-    { start: 550, text: "你也可能会问：那我不是目标用户吗？如果你收藏里只有娱乐向内容，Morncast 会诚实地说——本期可能不适合你。" },
-    { start: 590, text: "我们更在意的是：把那些「你觉得重要」但「永远排不上日程」的东西，变成你能听完的版本。" },
-    { start: 640, text: "技术实现上，夜间我们会拉取你认可过的条目，做理解与聚类，再生成脚本与音频。你打开时，只需要按播放。" },
-    { start: 690, text: "这并不是替代原视频：你可以在来源页点回去，把细节补全；播客负责给你地图，视频负责给你街景。" },
-    { start: 740, text: "如果你正在开车，请注意安全。我们在文案里避免让你必须看屏幕才能完成理解。" },
-    { start: 790, text: "好，来到收尾。今天你可以带走三句话：先场景后模型；先评测后扩参；先兑现收藏，再追新热点。" },
-    { start: 830, text: "明天同一时间，我们会把「设计与人机协作」这个话题做成通勤版。你也可以在设置里调整时长上限。" },
-    { start: 870, text: "感谢收听 Morncast。愿你今天的路，少堵一点，多想一点。我们下期见。" },
-  ];
-
-  const SOURCES_INITIAL = [
-    { id: "s1", title: "多模态不是炫技：三个落地信号", author: "硅谷徐老师", snippet: "从表单到对话，从准确率到任务完成率。", thumb: "t1" },
-    { id: "s2", title: "创业团队选模型的投入产出清单", author: "产品夜航船", snippet: "别问参数量，先问谁为结果负责。", thumb: "t2" },
-    { id: "s3", title: "注意力经济：收藏为什么总吃灰", author: "认知复利", snippet: "收藏是承诺，承诺需要低摩擦兑现。", thumb: "t3" },
-    { id: "s4", title: "评测集怎么做才算真正可迭代", author: "ML 工程实录", snippet: "两周只做一件事：失败案例分类。", thumb: "t4" },
-  ];
-  let sourcesList = SOURCES_INITIAL.map((s) => Object.assign({}, s));
+  let chapters = [];
+  let transcriptLines = [];
+  let sourcesList = [];
 
   const STAR_PATH = "M12 2.25l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2.25z";
   function svgStarSolid() {
@@ -1216,12 +1186,7 @@
     return `<svg class="icon-star" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="none" stroke="#F0C330" stroke-width="1.65" stroke-linejoin="round" d="${STAR_PATH}"/></svg>`;
   }
 
-  const recommendations = [
-    { id: "r1", title: "一文读懂：大模型落地的评测优先思路", author: "极客公园", snippet: "把社死瞬间写进每周例会。", thumb: "t2" },
-    { id: "r2", title: "对话式交互什么时候会害了你", author: "UX 小报", snippet: "高错误成本场景的人机共治。", thumb: "t1" },
-    { id: "r3", title: "创业者的数据飞轮：从 0 到 1", author: "创业内幕", snippet: "别急着扩参，先扩场景。", thumb: "t3" },
-    { id: "r4", title: "通勤学习：如何把碎片时间变成系统输入", author: "深度工作间", snippet: "耳机里的地图，屏幕里的街景。", thumb: "t4" },
-  ];
+  let recommendations = [];
 
   let currentSec = 0;
   let playing = false;
@@ -1310,6 +1275,7 @@
       const card = document.createElement("article");
       card.className = "list-card";
       card.dataset.id = item.id;
+      if (item.videoUrl) card.style.cursor = "pointer";
       card.innerHTML = `
         <button type="button" class="btn-star-remove" title="取消收录" aria-label="取消本条收藏">${svgStarSolid()}</button>
         <div class="feed-body">
@@ -1327,6 +1293,12 @@
         sourcesList = sourcesList.filter((s) => s.id !== item.id);
         renderSources();
       });
+      if (item.videoUrl) {
+        card.addEventListener("click", (e) => {
+          if (e.target.closest(".btn-star-remove")) return;
+          window.open(item.videoUrl, "_blank");
+        });
+      }
       wrap.appendChild(card);
     });
     updateClearSourcesButton();
@@ -1334,9 +1306,11 @@
 
   function renderRecs() {
     const wrap = document.getElementById("recList");
+    wrap.innerHTML = "";
     recommendations.forEach((item, idx) => {
       const card = document.createElement("article");
       card.className = "list-card";
+      if (item.videoUrl) card.style.cursor = "pointer";
       card.innerHTML = `
         <div class="feed-body">
           <div class="feed-index">推荐 ${String(idx + 1).padStart(2, "0")}</div>
@@ -1359,6 +1333,12 @@
         fav.setAttribute("aria-label", saved ? "已收藏，点击取消" : "收藏");
         fav.innerHTML = saved ? svgStarSolid() : svgStarOutline();
       });
+      if (item.videoUrl) {
+        card.addEventListener("click", (e) => {
+          if (e.target.closest(".thumb-fav")) return;
+          window.open(item.videoUrl, "_blank");
+        });
+      }
       wrap.appendChild(card);
     });
   }
@@ -1420,34 +1400,39 @@
   function seekTo(sec) {
     currentSec = Math.min(Math.max(sec, 0), TOTAL_SEC);
     lastTranscriptActiveIdx = -1;
+    if (audioEl.src) audioEl.currentTime = currentSec;
     updateProgressUI();
   }
 
   function togglePlay() {
-    playing = !playing;
-    app.classList.toggle("playing", playing);
-    const icon = document.getElementById("playFabIcon");
-    if (icon) icon.textContent = playing ? "❚❚" : "▶";
-    if (playing) {
-      lastTs = performance.now();
-      const tick = (ts) => {
-        if (!playing) return;
-        const dt = (ts - lastTs) / 1000;
-        lastTs = ts;
-        currentSec += dt * playbackRate;
-        if (currentSec >= TOTAL_SEC) {
-          currentSec = TOTAL_SEC;
-          togglePlay();
-        }
-        updateProgressUI();
-        rafId = requestAnimationFrame(tick);
-      };
-      rafId = requestAnimationFrame(tick);
-    } else if (rafId) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
+    if (!audioEl.src) return;
+    if (audioEl.paused) audioEl.play().catch(() => {});
+    else audioEl.pause();
   }
+
+  audioEl.addEventListener("play", () => {
+    playing = true;
+    app.classList.add("playing");
+    const icon = document.getElementById("playFabIcon");
+    if (icon) icon.textContent = "❚❚";
+  });
+  audioEl.addEventListener("pause", () => {
+    playing = false;
+    app.classList.remove("playing");
+    const icon = document.getElementById("playFabIcon");
+    if (icon) icon.textContent = "▶";
+  });
+  audioEl.addEventListener("timeupdate", () => {
+    currentSec = audioEl.currentTime;
+    updateProgressUI();
+  });
+  audioEl.addEventListener("ratechange", () => {
+    playbackRate = audioEl.playbackRate;
+  });
+  audioEl.addEventListener("ended", () => {
+    currentSec = TOTAL_SEC;
+    updateProgressUI();
+  });
 
   function buildSegments() {
     segmentBar.innerHTML = "";
@@ -1498,6 +1483,7 @@
       b.textContent = sp + "×";
       b.addEventListener("click", () => {
         playbackRate = sp;
+        if (audioEl) audioEl.playbackRate = sp;
         row.querySelectorAll(".pill").forEach((p) => p.classList.remove("selected"));
         b.classList.add("selected");
         updateProgressUI();
@@ -1548,13 +1534,49 @@
 
   buildWaveBars();
   buildSegments();
-  renderChapters();
-  renderTranscript();
-  renderSources();
-  renderRecs();
   setupProgressSeek();
   setupSpeedPills();
-  updateProgressUI();
+
+  function hydrate(brief) {
+    chapters = brief.chapters || [];
+    transcriptLines = brief.transcriptLines || [];
+    sourcesList = brief.sources || [];
+    recommendations = brief.recommendations || [];
+    TOTAL_SEC = brief.totalSec || 0;
+
+    if (brief.title) {
+      const tagline = document.querySelector(".hero-brief-tagline");
+      if (tagline) tagline.textContent = brief.title;
+    }
+    if (brief.audioUrl) {
+      audioEl.src = brief.audioUrl;
+      audioEl.playbackRate = playbackRate;
+    }
+
+    renderChapters();
+    renderTranscript();
+    renderSources();
+    renderRecs();
+    updateProgressUI();
+  }
+
+  async function loadBrief() {
+    try {
+      const res = await fetch("/api/brief");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || ("HTTP " + res.status));
+      }
+      const data = await res.json();
+      hydrate(data);
+      loadingMask.style.display = "none";
+    } catch (e) {
+      loadingText.textContent = "加载失败：" + e.message;
+      loadingText.style.color = "#ff8a8a";
+    }
+  }
+
+  loadBrief();
 
   function tickClock() {
     const d = new Date();
