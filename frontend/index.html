@@ -197,8 +197,8 @@
       scroll-behavior: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      /* 横向滑动交给本层；子页仅认领竖向，避免划不动翻页 */
-      touch-action: pan-x pinch-zoom;
+      /* 横向滑动交给本层；同时允许子页纵向滚动 */
+      touch-action: pan-x pan-y pinch-zoom;
     }
     .carousel::-webkit-scrollbar { display: none; }
 
@@ -215,7 +215,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior-y: auto;
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     .page-home {
@@ -253,7 +253,7 @@
       box-shadow:
         0 36px 72px rgba(0, 0, 0, 0.42),
         0 0 0 1px rgba(255, 255, 255, 0.07);
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     .hero-brief-media {
@@ -417,7 +417,7 @@
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255,255,255,0.08);
       box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     .hero-title-row {
@@ -603,7 +603,7 @@
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
     }
     .list-card .feed-title {
       font-size: 15px;
@@ -732,7 +732,7 @@
       padding-right: 4px;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     /* 章节大纲：覆盖在逐字稿区域上方 */
@@ -789,7 +789,7 @@
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-x pan-y pinch-zoom;
     }
     .outline-drawer-actions {
       flex-shrink: 0;
@@ -1188,6 +1188,14 @@
 
   let recommendations = [];
 
+  const DEMOS = [
+    { id: "ai", topic: "AI 编程", endpoint: "/api/brief" },
+    { id: "intern", topic: "实习生", endpoint: "/assets/demos/intern/meta.json" },
+    { id: "pet", topic: "宠物科普", endpoint: "/assets/demos/pet/meta.json" },
+  ];
+  let demosData = [];
+  let currentDemoIndex = 0;
+
   let currentSec = 0;
   let playing = false;
   let rafId = null;
@@ -1248,6 +1256,7 @@
 
   function renderTranscript() {
     const t = document.getElementById("transcript");
+    t.innerHTML = "";
     transcriptLines.forEach((line, i) => {
       const div = document.createElement("p");
       div.className = "transcript-line";
