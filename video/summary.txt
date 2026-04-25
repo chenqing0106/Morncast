@@ -1,0 +1,75 @@
+1、强烈推荐6个自用skills
+
+视频作者推荐六个自用且经过研究的 AI 工作流 Skill，功能覆盖工作流转化、文档处理等多场景。
+Skill Creator：官方认证的 Skill 鼻祖，可将跑通的工作流转化为专属 Skill，自动分析流程、提取复用模式、生成标准文档，支持一键安装使用。
+Document Skills：官方出品的文档操作工具，可自动填表、撰写文档、批量处理 Excel 数据、一键生成 PPT、智能阅读 PDF，能提升 AI 交互能力。
+Find Skill：可从数万个 Skill 中精准匹配需求场景，筛选高评分 Skill、对比相似方案并推荐最佳选择。
+Frontend Design：官方出品的前端美化工具，提供专业级 UI 设计、一键美化界面、响应式布局功能，可优化网页前端效果。
+Code Simplifier：可自动简化复杂逻辑、消除冗余代码、优化代码结构、提升代码可读性，避免 AI 生成冗余代码。
+Graph Loop：支持自动循环执行任务、无限搜索资料、持续迭代优化直至任务完成，使用时建议搭配包月编程套餐以控制成本。
+作者表示这六个 Skill 自己每天都在使用。
+
+
+2、OpenCode详细攻略
+
+视频详细演示了 AI 编程工具 OpenCode 的全形态使用及专属插件配置方法。
+多形态安装：含命令行、桌面客户端、VS Code 插件、云端四种形态；命令行需先装 Node.js，桌面客户端为 Beta 版 bug 较多，插件版依赖命令行版，云端适配 GitHub。
+多模型接入：内置 GLM 4.7 等免费模型；可通过插件免费接入 Gemini3 Pro、Claude 4.5 Opus；需 ChatGPT Plus 账号接入 GPT Codex；支持 75 种模型接入方式。
+核心高级功能：支持多 session 并行开发，可回退代码至指定对话节点；可迁移 Claude Code 的 skill，支持本地、远程 MCP 配置。
+专属插件配置：Oh My OpenCode 集成七大编程智能体，各适配专属模型；输入 ulw 可触发多智能体并行调度，高效完成复杂任务。
+云端场景用法：在 GitHub 项目中输入 / OpenCode，可触发 AI 修复 Bug、创建 PR；需先上传项目、配置密钥。
+OpenCode 适配多种使用场景，覆盖不同阶段 AI 编程学习者需求。
+
+
+3、推荐三个超级实用的skills
+
+视频介绍了三款实用的 AI 相关技能工具。
+四环型技能：用户输入模糊想法，该技能可帮用户发散思维、分解步骤，直接生成可执行方案。
+文件规划技能：该技能会自动创建三个文档，弥补 AI 记性差的短板，相当于给 AI 配备移动硬盘，能使任务完成率提升 40%。
+Notebook LM 技能：该技能可实现 Cloud Code 与 Notebook 无缝对话，支持批量上传素材，能一键生成播客、思维导图和 PPT，还可解析 YouTube 视频内容。
+三款技能的名称被发布在视频评论区。
+
+
+4、让vibecoding产品变好看的四个工具
+
+AI 产品经理分享四款优化 AI 产品 Demo 前端美观度的工具。
+Design Prompt Step：提供多种前端风格，点击 “get prompt” 复制提示词，发送至 And Gravity、Cursor 或 Cloud Code，可快速生成对应前端页面。
+Material.io：谷歌开源设计系统，包含符合谷歌设计规范的配色、组件（如各类按钮样式），适用于专业场景，可提供给 IDE 完成前端设计。
+Design.md.ai：包含大量前端模板，点击模板可下载 MD 文件或复制提示词，发送给 AI 即可修改前端界面，支持通过 Cloud Code 或 Any Gravity 连接 MCP 实现自动打通。
+UIUX Pro Max Skill：GitHub 平台的插件，下载后可根据前端产品需求设计界面，为分享者日常高频使用的工具。
+四款工具分别适配专业场景、快速验证及独立 AI 编码产品开发等不同需求。
+
+
+5、Gemini难用到抓狂？这个开源神器直接掀桌子
+
+开源项目 Gemini Voyager 可大幅优化 Gemini 网页版的使用体验。
+文件夹管理：Gemini Voyager 支持给 Gemini 聊天记录分类，还能创建多级目录，可通过拖拽快速完成分类。
+Timeline 时间轴：Gemini Voyager 将 Gemini 的聊天记录转化为可视化地图，记录每一次提问，点击可跳转对应回答，长按可一键收藏。
+图表渲染功能：Gemini 仅能输出代码，Gemini Voyager 可在当前页面将代码渲染为精美流程图，支持图标与代码随意切换，无需复制到其他网页查看。
+附加优化功能：Gemini Voyager 可自动处理 NanobananaPro 生成图片的水印，且该项目完全免费。
+
+
+6、github开源，10w+ AI提示词写法
+
+一款 GitHub 热门 AI 提示词优化工具可提供生成、查询等多项功能。
+核心生成功能：用户输入自身想法，工具可在几秒内生成专业提示词，支持文生图、图生图场景。
+提示词百宝箱：工具内置 AI 提示词百宝箱，涵盖 IT 编程、AI 写作辅助、文章 / 报告、英语翻译、职场、金融、自媒体等 20 多个分类，包含上万种提示词，用户可直接复制粘贴使用。
+生图技巧库：工具收录 1000 多种 Nanobanana Pro 的生图技巧，且相关内容处于持续更新状态。该工具登上 GitHub 热门排行榜单，获得 20K 的 star 数。
+
+
+7、AI编程中控Skills
+
+cc-switch 是一款可统一管理多款 AI 编程工具的轻量跨平台桌面应用。
+统一配置管理：用户无需分别打开 Claude、Code、Codex、Gemini CLIicense、OpenCode，可在 cc-switch 界面完成模型服务商、MCP、Skills、系统提示词的配置操作。
+模型新增同步：用户在 cc-switch 给 OpenCode 新增模型服务商后，打开 OpenCode 即可看到并使用对应新模型。
+Skills/MCP 操作：用户可通过界面快速接入外部 Skills/MCP，查看各 AI 编程工具已安装的 Skills/MCP，还能将 Claude Code 已安装的 Skills/MCP 一键复制给 OpenCode。
+附加高阶功能：cc-switch 会统计各模型服务商的 token 用量和请求情况，提供模型调用自动故障转移、推理 API 兼容性问题自动修复功能。
+开源跨平台属性：该应用基于 MIT 协议开发，开源免费，支持本地运行且可跨平台使用。
+
+
+8、装完claudecode去哪里
+
+视频介绍了两款可获取 Claude Code 实用 Skills 的网站及使用方法。
+Agent Skills Marketplace：该网站汇集各类热门 Skill，设有搜索栏和分类板块，涵盖工具、开发等类型；用户可找到目标 Skill，复制对应代码到终端自动安装，也可批量下载后让 Claude Code 协助安装。
+Vercel 推出网站：该网站展示 Skill 的 24 小时趋势、全时段安装排行及一小时热门榜单；用户可复制代码让 Claude Code 安装，还能查看 Skill 详情。
+语言问题解决：若看不懂网站内容，可使用沉浸式翻译一键翻译，快速了解 Skill 功能。

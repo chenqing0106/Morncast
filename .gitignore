@@ -8,3 +8,9 @@ __pycache__/
 
 .claude
 CLAUDE.md
+
+# 视频原文件太大（~91MB），只追踪 title.txt / summary.txt
+video/*.mp4
+
+# 19MB 海报，太大不进 git
+morncost-poster-2.png
