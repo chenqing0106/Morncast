@@ -16,10 +16,23 @@ from fastapi.staticfiles import StaticFiles
 
 
 VIDEO_DIR = Path("video")
+PIC_DIR = Path("pic")
 DATA_DIR = Path("data")
 AUDIO_DIR = Path("audio_cache")
 DATA_DIR.mkdir(exist_ok=True)
 AUDIO_DIR.mkdir(exist_ok=True)
+
+# id -> (作者, 时长)，按 video/title.txt 编号顺序对应
+AUTHORS: dict[int, tuple[str, str]] = {
+    1: ("土木AI提效实践日记", "00:56"),
+    2: ("技术爬爬虾", "18:12"),
+    3: ("深度学习的Alpha狗", "00:36"),
+    4: ("亚惠AI产品经理", "02:27"),
+    5: ("艾伦2077v", "00:52"),
+    6: ("程序员三千", "00:44"),
+    7: ("小葱AI", "01:08"),
+    8: ("Esther不二", "01:24"),
+}
 
 SCRIPT_CACHE = DATA_DIR / "script.json"
 TIMING_CACHE = DATA_DIR / "timing.json"
@@ -45,6 +58,8 @@ app.add_middleware(
 app.mount("/audio", StaticFiles(directory="audio_cache"), name="audio")
 app.mount("/assets", StaticFiles(directory="frontend/assets"), name="assets")
 app.mount("/videos", StaticFiles(directory="video"), name="videos")
+if PIC_DIR.exists():
+    app.mount("/pic", StaticFiles(directory="pic"), name="pic")
 
 
 @app.get("/")
@@ -100,20 +115,30 @@ def load_manifest() -> list[dict]:
     mp4_files = [p.name for p in VIDEO_DIR.glob("*.mp4")]
     norm_mp4 = {_normalize(name.rsplit(".", 1)[0]): name for name in mp4_files}
 
+    pic_files = [p.name for p in PIC_DIR.glob("*.png")] if PIC_DIR.exists() else []
+    norm_pic = {_normalize(name.rsplit(".", 1)[0]): name for name in pic_files}
+
+    def _fuzzy_lookup(norm_title: str, table: dict[str, str]) -> str:
+        for nk, fname in table.items():
+            if norm_title in nk or nk in norm_title:
+                return fname
+        return ""
+
     manifest = []
     for idx in sorted(titles.keys()):
         title = titles[idx]
         norm_title = _normalize(title)
-        video_file = ""
-        for nk, fname in norm_mp4.items():
-            if norm_title in nk or nk in norm_title:
-                video_file = fname
-                break
+        video_file = _fuzzy_lookup(norm_title, norm_mp4)
+        cover_file = _fuzzy_lookup(norm_title, norm_pic)
+        author, duration = AUTHORS.get(idx, ("抖音收藏", ""))
         manifest.append({
             "id": idx,
             "title": title,
             "summary": summaries.get(idx, ""),
             "videoFile": video_file,
+            "coverFile": cover_file,
+            "author": author,
+            "duration": duration,
         })
     return manifest
 
@@ -220,9 +245,11 @@ def _video_card(m: dict, prefix: str, idx: int) -> dict:
         "id": f"{prefix}{m['id']}",
         "title": m["title"],
         "snippet": (m["summary"][:60] + "…") if len(m["summary"]) > 60 else m["summary"],
-        "author": "抖音收藏",
+        "author": m.get("author") or "抖音收藏",
+        "duration": m.get("duration", ""),
         "thumb": f"t{(idx % 4) + 1}",
         "videoUrl": f"/videos/{m['videoFile']}" if m["videoFile"] else "",
+        "cover": f"/pic/{m['coverFile']}" if m.get("coverFile") else "",
     }
 
 
