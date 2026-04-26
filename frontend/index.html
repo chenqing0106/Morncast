@@ -1279,7 +1279,7 @@
       letter-spacing: 0.04em;
       margin-bottom: 6px;
     }
-    .list-card .feed-body { min-width: 0; padding-right: 12px; padding-top: 2px; }
+    .list-card .feed-body { min-width: 0; padding-right: 56px; padding-top: 2px; }
     /* 收藏来源：黄色实心星 = 取消本条收录 */
     .btn-star-remove {
       position: absolute;
@@ -1764,6 +1764,15 @@
     if (btn) btn.disabled = sourcesList.every((s) => !s.saved);
   }
 
+  function attachCardOpenVideo(card, item) {
+    if (!item || !item.videoUrl) return;
+    card.style.cursor = "pointer";
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      window.open(item.videoUrl, "_blank", "noopener");
+    });
+  }
+
   function renderSources() {
     const wrap = document.getElementById("sourceList");
     wrap.innerHTML = "";
@@ -1792,6 +1801,7 @@
         btn.setAttribute("aria-pressed", item.saved);
         updateClearSourcesButton();
       });
+      attachCardOpenVideo(card, item);
       wrap.appendChild(card);
     });
 
@@ -1821,6 +1831,7 @@
         </div>
         <button type="button" class="thumb-fav" aria-label="收藏" aria-pressed="false">${svgStarOutline()}</button>
       `;
+      attachCardOpenVideo(card, item);
       const fav = card.querySelector(".thumb-fav");
       fav.addEventListener("click", (e) => {
         e.stopPropagation();
