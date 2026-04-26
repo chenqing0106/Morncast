@@ -170,7 +170,7 @@ async def main_async(manifest_path: Path) -> None:
     chars_per_sec = script_len / max(total_sec, 1)
     chapters = [
         {
-            "start": round(c.get("char_start", 0) / chars_per_sec),
+            "start": min(round(c.get("char_start", 0) / chars_per_sec), total_sec),
             "title": c.get("title", ""),
         }
         for c in script_data.get("chapters", [])

@@ -1226,6 +1226,47 @@
       border-color: rgba(255,255,255,0.2);
       color: #fff;
     }
+
+    /* demo 主题切换 chip */
+    .demo-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 0 0 14px;
+    }
+    .demo-chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-family: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: transparent;
+      color: rgba(255, 255, 255, 0.55);
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .demo-chip.active {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.32);
+      color: #fff;
+    }
+    .demo-chip.is-pending {
+      opacity: 0.55;
+      font-style: italic;
+    }
+    .app.demo-pending .play-fab-glass,
+    .app.demo-pending .btn-play-toggle {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .app.demo-pending .hero-brief-foot {
+      opacity: 0.55;
+    }
+
     .modal-actions { margin-top: 18px; display: flex; gap: 10px; }
     .modal-actions button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-family: inherit; }
     .btn-close-sheet { background: rgba(255,255,255,0.12); color: #fff; }
@@ -1407,6 +1448,7 @@
         <section class="page page-home" data-page="0" aria-label="播放">
           <div class="hero-stack">
             <p class="home-eyebrow">Morncast</p>
+            <div class="demo-chips" id="demoChips" role="tablist" aria-label="主题切换"></div>
             <article class="hero-brief-card">
               <div class="hero-brief-media" aria-hidden="true">
                 <img class="hero-brief-photo" src="assets/hero-daily-brief.png" alt="" width="800" height="1200" decoding="async" fetchpriority="high" />
@@ -1618,6 +1660,14 @@
 
   let recommendations = [];
 
+  const DEMOS = [
+    { id: "ai", topic: "AI 编程", endpoint: "/api/brief" },
+    { id: "intern", topic: "实习生", endpoint: "/assets/demos/intern/meta.json" },
+    { id: "pet", topic: "宠物科普", endpoint: "/assets/demos/pet/meta.json" },
+  ];
+  let demosData = [];
+  let currentDemoIndex = 0;
+
   let currentSec = 0;
   let playing = false;
   let rafId = null;
@@ -1679,6 +1729,7 @@
 
   function renderTranscript() {
     const t = document.getElementById("transcript");
+    t.innerHTML = "";
 
     const topSpacer = document.createElement("div");
     topSpacer.id = "transcriptSpacerTop";
@@ -1891,7 +1942,8 @@
   }
 
   function togglePlay() {
-    if (!audioEl.src) return;
+    const demo = demosData[currentDemoIndex];
+    if (!demo || !demo.audioUrl || demo.status === "pending") return;
     if (audioEl.paused) audioEl.play().catch(() => {});
     else audioEl.pause();
   }
@@ -2091,29 +2143,48 @@
     new ResizeObserver(updateTranscriptSpacers).observe(document.getElementById("transcript"));
   }
 
-  function hydrate(brief) {
-    chapters = brief.chapters || [];
-    transcriptLines = brief.transcriptLines || [];
-    sourcesList = (brief.sources || []).map((s) => Object.assign({}, s, {
+  function hydrateDemo(index) {
+    if (index < 0 || index >= demosData.length) return;
+    const demo = demosData[index];
+
+    audioEl.pause();
+    if (audioEl.src) {
+      try { audioEl.currentTime = 0; } catch (_) {}
+    }
+    currentSec = 0;
+    lastTranscriptActiveIdx = -1;
+    currentDemoIndex = index;
+
+    chapters = demo.chapters || [];
+    transcriptLines = demo.transcriptLines || [];
+    sourcesList = (demo.sources || []).map((s) => Object.assign({}, s, {
       saved: true,
       duration: s.duration || "—:—",
     }));
-    recommendations = (brief.recommendations || []).map((r) => Object.assign({}, r, {
+    recommendations = (demo.recommendations || []).map((r) => Object.assign({}, r, {
       duration: r.duration || "—:—",
     }));
-    TOTAL_SEC = brief.totalSec || 0;
+    TOTAL_SEC = demo.totalSec || 0;
 
-    if (brief.title) {
-      const tagline = document.querySelector(".hero-brief-tagline");
-      if (tagline) tagline.textContent = brief.title;
-    }
+    const tagline = document.querySelector(".hero-brief-tagline");
+    if (tagline) tagline.textContent = demo.title || demo.topic || "Morncast";
+
     document.querySelectorAll("#timeTotal, .player-container .time-row span:last-child").forEach((el) => {
       el.textContent = fmt(TOTAL_SEC);
     });
-    if (brief.audioUrl) {
-      audioEl.src = brief.audioUrl;
+
+    const playable = !!demo.audioUrl && demo.status !== "pending";
+    if (playable) {
+      audioEl.src = demo.audioUrl;
       audioEl.playbackRate = playbackRate;
+    } else {
+      audioEl.removeAttribute("src");
     }
+    app.classList.toggle("demo-pending", !playable);
+    document.querySelectorAll("#btnPlayMain, .btn-play-toggle").forEach((btn) => {
+      btn.disabled = !playable;
+      btn.setAttribute("aria-disabled", playable ? "false" : "true");
+    });
 
     renderChapters();
     renderTranscript();
@@ -2121,29 +2192,69 @@
     renderSources();
     renderRecs();
     updateProgressUI();
+    renderDemoChips();
     requestAnimationFrame(() => {
       applyTitleMarquees();
       updateTranscriptSpacers();
     });
   }
 
-  async function loadBrief() {
-    try {
-      const res = await fetch("/api/brief");
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || ("HTTP " + res.status));
-      }
-      const data = await res.json();
-      hydrate(data);
-      loadingMask.style.display = "none";
-    } catch (e) {
-      loadingText.textContent = "加载失败：" + e.message;
-      loadingText.style.color = "#ff8a8a";
-    }
+  function renderDemoChips() {
+    const wrap = document.getElementById("demoChips");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    demosData.forEach((demo, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      const active = idx === currentDemoIndex;
+      const pending = demo.status === "pending";
+      btn.className = "demo-chip" + (active ? " active" : "") + (pending ? " is-pending" : "");
+      btn.dataset.demoIndex = String(idx);
+      btn.setAttribute("role", "tab");
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+      btn.textContent = demo.topic + (pending ? " · 即将" : "");
+      btn.addEventListener("click", () => hydrateDemo(idx));
+      wrap.appendChild(btn);
+    });
   }
 
-  loadBrief();
+  async function loadAllDemos() {
+    demosData = await Promise.all(DEMOS.map(async (config) => {
+      try {
+        const res = await fetch(config.endpoint);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || ("HTTP " + res.status));
+        }
+        const data = await res.json();
+        return Object.assign({}, config, data);
+      } catch (e) {
+        console.warn("[demo] 加载失败:", config.id, e.message);
+        return Object.assign({}, config, {
+          status: "pending",
+          audioUrl: null,
+          _loadError: e.message,
+        });
+      }
+    }));
+
+    // 主 demo (AI) 必须可用，否则整页报错
+    const primary = demosData[0];
+    if (primary && primary._loadError) {
+      loadingText.textContent = "加载失败：" + primary._loadError;
+      loadingText.style.color = "#ff8a8a";
+      return;
+    }
+
+    renderDemoChips();
+    hydrateDemo(currentDemoIndex);
+    loadingMask.style.display = "none";
+  }
+
+  // 暴露给前端同学：可绑定到任意 UI（chip / 滑动手势 / 键盘）
+  window.morncastSwitchDemo = hydrateDemo;
+
+  loadAllDemos();
 
   function tickClock() {
     const d = new Date();
