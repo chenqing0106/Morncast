@@ -37,16 +37,28 @@ TTS_VOICE = os.environ.get("TTS_VOICE", "zh-CN-XiaoxiaoNeural")
 TTS_RATE = os.environ.get("TTS_RATE", "+0%")
 
 
-PROMPT = """你是 Morncast 的播客脚本生成器。
-把以下抖音视频的 AI 摘要整合成一段自然流畅的通勤播客脚本，口语化，约 400-600 字。
-本期围绕「{topic}」主题展开，请保持话题聚焦，不要跳到无关领域。
+PROMPT = """你是 Morncast 的播客脚本生成器。把以下抖音视频的 AI 摘要，
+整合成一段在通勤路上听的播客脚本。本期围绕「{topic}」展开，保持话题聚焦。
 
-要求：
-1. 开头用 "早上好，欢迎收听 Morncast" 起句
-2. 各条内容之间用过渡语衔接，不要生硬列举每一条
-3. 结尾用一句有温度的话收尾
+【信息密度 — 最重要】
+- 总字数 1000-1400 字（约 2-3 分钟）
+- 每条视频必须保留 ≥2 个具体可操作的做法：话术模板、数字、清单项、原话用词。
+  照搬细节，而不是概括成上位概念。
+- 禁止使用"放平心态 / 保持真诚 / 多些数据支撑 / 守护权益"这类没有信息量的口号。
+- 禁止"无论是…还是… / 当…褪去 / 在…的同时"这类纯过渡空句。
+  过渡语累计不超过总字数的 10%。
 
-视频清单（编号 / 标题 / 摘要）：
+【引用来源】
+- 提到具体内容时点出博主名，例如：
+  "求职导师小K 给了一个公式…"、"九年经验HR小Z 教了一招…"。
+- 全期至少要点名 5 个以上博主。
+- 用"她说 / 他建议 / XX 提醒大家"这种自然引用，避免"接下来第三条…"的列表感。
+
+【开头结尾 — 严格照抄，不要改写】
+- 第一句固定："早上好，我是 Morncast。"
+- 最后一句固定（slogan）："{slogan}"
+
+视频清单（编号 / 标题 / 博主 / 摘要）：
 {items}
 
 输出严格的 JSON，不要有任何 markdown 代码块、不要有注释，格式如下：
@@ -54,7 +66,7 @@ PROMPT = """你是 Morncast 的播客脚本生成器。
   "script": "完整播客脚本文字",
   "chapters": [
     {{"title": "章节名称（≤10字）", "char_start": 0}},
-    {{"title": "第二章节名称", "char_start": 120}}
+    {{"title": "第二章节名称", "char_start": 250}}
   ]
 }}"""
 
@@ -65,9 +77,11 @@ def build_script(manifest: dict) -> dict:
         raise ValueError("manifest.sources 不能为空")
 
     items = "\n\n".join(
-        f"【{s.get('id', i + 1)}】{s.get('title', '未命名')}\n{s.get('summary', '')}"
+        f"【{s.get('id', i + 1)}】{s.get('title', '未命名')}（博主：{s.get('author', '匿名')}）\n{s.get('summary', '')}"
         for i, s in enumerate(sources)
     )
+
+    slogan = manifest.get("slogan", "今天也要元气出发。")
 
     client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
     print(f"→ 调 LLM ({LLM_MODEL}) 生成脚本…")
@@ -76,7 +90,7 @@ def build_script(manifest: dict) -> dict:
         max_tokens=4096,
         messages=[{
             "role": "user",
-            "content": PROMPT.format(topic=manifest["topic"], items=items),
+            "content": PROMPT.format(topic=manifest["topic"], items=items, slogan=slogan),
         }],
     )
     raw = msg.choices[0].message.content.strip()
@@ -128,19 +142,22 @@ async def synthesize(script_text: str, output_audio: Path) -> dict:
     }
 
 
-def build_card(item: dict, prefix: str, idx: int) -> dict:
+def build_card(item: dict, prefix: str, idx: int, demo_id: str = "") -> dict:
     snippet = item.get("snippet")
     if not snippet:
         summary = item.get("summary", "")
         snippet = (summary[:60] + "…") if len(summary) > 60 else summary
     video_file = item.get("videoFile") or ""
+    cover_file = item.get("coverFile") or ""
     return {
         "id": f"{prefix}{item.get('id', idx + 1)}",
         "title": item.get("title", ""),
         "snippet": snippet,
         "author": item.get("author", "抖音收藏"),
+        "duration": item.get("duration", ""),
         "thumb": f"t{(idx % 4) + 1}",
         "videoUrl": f"/videos/{video_file}" if video_file else "",
+        "cover": f"/assets/demos/{demo_id}/covers/{cover_file}" if (cover_file and demo_id) else "",
     }
 
 
@@ -185,9 +202,9 @@ async def main_async(manifest_path: Path) -> None:
         "totalSec": total_sec,
         "chapters": chapters,
         "transcriptLines": tts_data["transcriptLines"],
-        "sources": [build_card(s, "s", i) for i, s in enumerate(manifest["sources"])],
+        "sources": [build_card(s, "s", i, demo_id) for i, s in enumerate(manifest["sources"])],
         "recommendations": [
-            build_card(r, "r", i)
+            build_card(r, "r", i, demo_id)
             for i, r in enumerate(manifest.get("recommendations", []))
         ],
     }
