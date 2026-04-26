@@ -13,7 +13,7 @@ set -euo pipefail
 
 REMOTE="${REMOTE:-tencentyun}"
 REMOTE_DIR="${REMOTE_DIR:-~/morncast}"
-PORT="${PORT:-8002}"
+PORT="${PORT:-8000}"
 
 echo "→ target  : $REMOTE:$REMOTE_DIR"
 echo "→ port    : $PORT"
@@ -22,7 +22,7 @@ echo ""
 # 0. 确认本地缓存存在（避免推一个空 cache 到服务器）
 if [ ! -f audio_cache/morncast.mp3 ] || [ ! -f data/script.json ] || [ ! -f data/timing.json ]; then
   echo "⚠️  本地缓存不全，先在本地跑一次让缓存 warm 起来："
-  echo "   curl http://127.0.0.1:8002/api/brief"
+  echo "   curl http://127.0.0.1:8000/api/brief"
   echo ""
   read -p "继续部署（服务器会尝试调 Edge TTS，国内可能失败）？[y/N] " ans
   [[ "$ans" == "y" || "$ans" == "Y" ]] || exit 1
