@@ -5,21 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0d1f14" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>Morncast · 通勤播客演示</title>
+  <title>Morncast · 通勤播客</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,500&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --bg-deep: #0d1f14;
-      --glass: rgba(18, 48, 32, 0.72);
-      --glass-strong: rgba(12, 36, 24, 0.88);
-      --accent: #3d8f6a;
-      --accent-bright: #5cb88a;
-      --text: #f4fbf7;
-      --text-dim: rgba(244, 251, 247, 0.72);
-      --segment-inactive: rgba(255, 255, 255, 0.22);
-      --radius: 18px;
+      --bg-deep: #0d0d0d;
+      --bg-card: rgba(255, 255, 255, 0.05);
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-strong: rgba(255, 255, 255, 0.08);
+      --accent: #ffffff;
+      --accent-bright: rgba(255, 255, 255, 0.92);
+      --text: #f4f4f5;
+      --text-dim: rgba(244, 244, 245, 0.52);
+      --segment-inactive: rgba(255, 255, 255, 0.12);
+      --radius: 12px;
+      --radius-lg: 16px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
       --phone-max-w: 430px;
@@ -29,13 +32,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html {
       -webkit-text-size-adjust: 100%;
-      background: #050a07;
+      background: var(--bg-deep);
     }
     body {
       margin: 0;
       min-height: 100dvh;
       min-height: 100svh;
-      background: #050a07;
+      background: var(--bg-deep);
       color: var(--text);
       overflow-x: hidden;
       overflow-y: hidden;
@@ -78,24 +81,13 @@
       flex-direction: column;
     }
 
-    /* 参考原型色调：纯 CSS 渐变 + 光晕，不使用摄影背景图 */
+    /* 纯深色背景 */
     .bg-layer {
       position: absolute;
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background:
-        radial-gradient(ellipse 130% 70% at 50% -15%, rgba(92, 184, 138, 0.35) 0%, transparent 52%),
-        radial-gradient(ellipse 80% 55% at 100% 35%, rgba(61, 143, 106, 0.22) 0%, transparent 48%),
-        radial-gradient(ellipse 75% 60% at -5% 80%, rgba(27, 67, 50, 0.5) 0%, transparent 50%),
-        linear-gradient(168deg, #143824 0%, #0d1f14 38%, #070f0c 100%);
-    }
-    .bg-layer::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(4, 12, 8, 0.65) 100%);
-      opacity: 0.95;
+      background: var(--bg-deep);
     }
 
     /* 横屏短时提示（仍建议竖屏使用） */
@@ -145,14 +137,21 @@
     }
     .icon-btn {
       width: 40px; height: 40px;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 12px;
-      background: rgba(255,255,255,0.12);
-      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.82);
       display: grid;
       place-items: center;
       cursor: pointer;
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+    .icon-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.16);
+      color: #fff;
     }
     .top-tabs {
       flex: 1;
@@ -169,7 +168,7 @@
       font-size: 14px;
       color: var(--text-dim);
       padding-bottom: 6px;
-      border-bottom: 3px solid transparent;
+      border-bottom: 1.5px solid transparent;
       cursor: default;
     }
     .top-tab.active {
@@ -197,8 +196,8 @@
       scroll-behavior: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      /* 横向滑动交给本层；同时允许子页纵向滚动 */
-      touch-action: pan-x pan-y pinch-zoom;
+      /* 横向滑动交给本层；子页仅认领竖向，避免划不动翻页 */
+      touch-action: pan-x pinch-zoom;
     }
     .carousel::-webkit-scrollbar { display: none; }
 
@@ -215,7 +214,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior-y: auto;
-      touch-action: pan-x pan-y pinch-zoom;
+      touch-action: pan-y pinch-zoom;
     }
 
     .page-home {
@@ -253,7 +252,7 @@
       box-shadow:
         0 36px 72px rgba(0, 0, 0, 0.42),
         0 0 0 1px rgba(255, 255, 255, 0.07);
-      touch-action: pan-x pan-y pinch-zoom;
+      touch-action: pan-y pinch-zoom;
     }
 
     .hero-brief-media {
@@ -378,46 +377,63 @@
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.45);
       cursor: pointer;
       display: grid;
       place-items: center;
       touch-action: manipulation;
-      background: rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
       color: #fff;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       box-shadow:
         0 12px 36px rgba(0, 0, 0, 0.28),
         inset 0 1px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.15s ease, background 0.2s ease;
+      transition: all 0.25s ease;
     }
-    .play-fab-glass:active { transform: scale(0.94); }
+    .play-fab-glass:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+      border-color: rgba(255, 255, 255, 0.55);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+    .play-fab-glass:active {
+      transform: translateY(0) scale(0.96);
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    .play-fab-glass:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 3px;
+    }
     .app.playing .play-fab-glass {
-      background: rgba(255, 255, 255, 0.28);
-      border-color: rgba(180, 235, 210, 0.45);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+      border-color: rgba(255, 255, 255, 0.62);
     }
     .play-fab-icon {
-      font-size: 26px;
-      margin-left: 3px;
+      font-size: 20px;
+      margin-left: 0;
       line-height: 1;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
     }
     .app.playing .play-fab-icon {
       margin-left: 0;
-      font-size: 20px;
-      letter-spacing: -2px;
+      font-size: 18px;
+      letter-spacing: 0;
     }
 
     .glass-card {
       background: var(--glass);
-      border-radius: var(--radius);
+      border-radius: 12px;
       padding: 16px 18px;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-      touch-action: pan-x pan-y pinch-zoom;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.09);
+      box-shadow: 0 16px 42px rgba(0,0,0,0.24);
+      touch-action: pan-y pinch-zoom;
     }
 
     .hero-title-row {
@@ -435,11 +451,12 @@
     }
     .tag-ai {
       flex-shrink: 0;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.18);
-      color: var(--text);
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.6);
       font-weight: 600;
     }
 
@@ -452,7 +469,8 @@
     .info-cell {
       text-align: center;
       padding: 8px 4px;
-      background: rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px;
     }
     .info-cell .v { font-size: 13px; font-weight: 700; }
@@ -471,7 +489,8 @@
     }
     .summary-text .sparkle { margin-right: 4px; }
     .mini-route {
-      background: rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px;
       padding: 8px;
       display: flex;
@@ -503,7 +522,7 @@
     .wave-bar:nth-child(3n) { animation-delay: 0.25s; }
     .app:not(.playing) .wave-bar { animation: none; transform: scaleY(0.2); opacity: 0.35; }
     .hero-brief-waves .wave-bar {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(200, 235, 215, 0.35));
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.28));
     }
 
     @keyframes wave {
@@ -522,7 +541,7 @@
     .progress-track {
       height: 5px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.1);
       overflow: hidden;
       cursor: pointer;
     }
@@ -530,7 +549,7 @@
       height: 100%;
       width: 0%;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+      background: #fff;
       pointer-events: none;
     }
 
@@ -556,9 +575,9 @@
       width: 40px;
       height: 40px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(0, 0, 0, 0.15);
-      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255,255,255,0.82);
       font-size: 17px;
       cursor: pointer;
       display: grid;
@@ -568,10 +587,10 @@
     .btn-outline {
       flex-shrink: 0;
       padding: 10px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--text);
+      border-radius: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.5);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -591,35 +610,80 @@
     }
 
     .list-card {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      touch-action: pan-y pinch-zoom;
+      height: 80px;
+    }
+    .list-card .btn-star-remove {
+      align-self: center;
+    }
+    .list-card .feed-body {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .btn-star-remove {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
       display: grid;
-      grid-template-columns: 1fr 76px;
-      gap: 14px;
-      align-items: stretch;
-      padding: 14px 14px 14px 16px;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, rgba(22, 56, 40, 0.65) 0%, rgba(14, 40, 28, 0.78) 100%);
-      border-radius: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-      touch-action: pan-x pan-y pinch-zoom;
+      place-items: center;
+      padding: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.2s ease;
+      align-self: center;
+    }
+    .btn-star-remove:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-1px);
     }
     .list-card .feed-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      margin: 0 0 8px 0;
-      line-height: 1.4;
+      margin: 0 0 4px 0;
+      line-height: 1.3;
       letter-spacing: -0.01em;
+      overflow: hidden;
+    }
+    .list-card .feed-title .title-inner {
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .list-card .feed-title .title-inner.is-scrolling {
+      animation: title-marquee var(--marquee-dur, 5s) linear infinite;
+    }
+    @keyframes title-marquee {
+      0%, 15%   { transform: translateX(0); }
+      80%       { transform: translateX(var(--marquee-dist, -80px)); }
+      80.1%     { transform: translateX(0); }
+      100%      { transform: translateX(0); }
     }
     .list-meta {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 6px 8px;
       font-size: 12px;
       color: var(--text-dim);
       line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .author-pill {
       display: inline-flex;
@@ -627,10 +691,11 @@
       gap: 6px;
       padding: 3px 10px 3px 4px;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255,255,255,0.06);
       font-size: 11px;
       font-weight: 600;
-      color: rgba(230, 245, 236, 0.9);
+      color: rgba(255,255,255,0.72);
     }
     .snippet-line {
       flex: 1 1 100%;
@@ -641,17 +706,17 @@
     .avatar {
       width: 22px; height: 22px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #5cb88a, #2d6a4f);
+      background: linear-gradient(135deg, #6b7280, #2b2b2b);
     }
     .thumb {
-      width: 76px;
-      min-height: 102px;
-      border-radius: 12px;
+      width: 64px;
+      height: 60px;
+      border-radius: 8px;
       background: rgba(0,0,0,0.35);
       position: relative;
       overflow: hidden;
-      align-self: center;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.09);
     }
     .thumb::after {
       content: "";
@@ -668,7 +733,7 @@
       height: 28px;
       border-radius: 50%;
       background: rgba(255,255,255,0.95);
-      color: #1b4332;
+      color: rgba(15, 15, 15, 0.88);
       display: grid;
       place-items: center;
       font-size: 11px;
@@ -679,6 +744,51 @@
     .thumb.t2 { background: linear-gradient(160deg, #344e41, #a3b18a); }
     .thumb.t3 { background: linear-gradient(160deg, #0d3b2e, #52b788); }
     .thumb.t4 { background: linear-gradient(160deg, #1d3557, #457b9d); }
+    .thumb-duration {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0 12px;
+    }
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+    }
+    .btn-clear-sources {
+      font-size: 12px;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 3px 8px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: auto;
+      width: fit-content;
+      white-space: nowrap;
+    }
+    .btn-clear-sources:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
 
     .page-sources .section-title,
     .page-rec .section-title {
@@ -697,59 +807,94 @@
       gap: 12px;
       padding: 10px 12px;
       border-radius: 12px;
-      background: rgba(0,0,0,0.18);
+      background: rgba(255,255,255,0.04);
       cursor: pointer;
-      border: 1px solid transparent;
+      border: 1px solid rgba(255,255,255,0.06);
       transition: border-color 0.2s, background 0.2s;
+      color: rgba(244, 244, 245, 0.72);
     }
     .chapter-item:hover, .chapter-item:focus-visible {
       border-color: rgba(255,255,255,0.2);
       outline: none;
     }
     .chapter-item.active-chapter {
-      background: rgba(92, 184, 138, 0.25);
-      border-color: rgba(92, 184, 138, 0.5);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.14);
     }
     .chapter-time {
       font-size: 12px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
-      color: var(--accent-bright);
+      color: rgba(244, 244, 245, 0.9);
       min-width: 52px;
     }
-    .chapter-name { font-size: 13px; font-weight: 600; }
+    .chapter-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(244, 244, 245, 0.72);
+    }
+
+    .page-transcript {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-bottom: 0;
+      padding-left: 24px;
+      padding-right: 24px;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+    .page-sources,
+    .page-rec {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-bottom: 0;
+      padding-left: 24px;
+      padding-right: 24px;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+    .sources-panel,
+    .rec-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
 
     .transcript-panel {
       position: relative;
-      min-height: min(52dvh, 420px);
+      min-height: 0;
+      flex: 1;
       margin-top: 0;
     }
     .transcript {
       margin-top: 0;
-      max-height: min(52dvh, 420px);
-      min-height: min(52dvh, 420px);
+      max-height: none;
+      min-height: 0;
+      height: 100%;
       overflow-y: auto;
       padding-right: 4px;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+      overscroll-behavior-y: contain;
+      overscroll-behavior-x: auto;
       touch-action: pan-x pan-y pinch-zoom;
     }
 
-    /* 章节大纲：覆盖在逐字稿区域上方 */
+    /* 章节大纲：底部弹窗（与播放设置同风格） */
     .outline-drawer {
       position: absolute;
       inset: 0;
-      z-index: 6;
+      z-index: 30;
       display: flex;
       flex-direction: column;
-      padding: 12px 12px 10px;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0;
       box-sizing: border-box;
-      border-radius: 16px;
-      background: rgba(8, 32, 22, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.5);
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -761,54 +906,199 @@
       pointer-events: auto;
     }
     .outline-drawer-card {
-      flex: 1;
+      width: 100%;
       min-height: 0;
+      max-height: calc(100% - 10px);
       display: flex;
       flex-direction: column;
-      background: transparent;
-      border: none;
-      padding: 0;
-      box-shadow: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+      background: #121212;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 20px calc(16px + var(--safe-bottom));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     .outline-drawer-card h2 {
-      font-size: 16px;
-      margin-bottom: 6px;
+      font-size: 17px;
+      margin-bottom: 8px;
+      color: rgba(244, 244, 245, 0.9);
       flex-shrink: 0;
     }
     .outline-drawer-hint {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-dim);
-      margin-bottom: 10px;
+      margin-bottom: 14px;
       line-height: 1.4;
       flex-shrink: 0;
+    }
+    .outline-drawer-dismiss {
+      width: 100%;
+      flex: 1;
+      min-height: 44px;
+      cursor: pointer;
+      background: transparent;
+      border: 0;
     }
     #chapterListModal {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      touch-action: pan-x pan-y pinch-zoom;
-    }
-    .outline-drawer-actions {
-      flex-shrink: 0;
-      margin-top: 12px;
+      touch-action: pan-y pinch-zoom;
+      padding-right: 2px;
+      padding-bottom: 8px;
     }
     .transcript-line {
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.65;
       padding: 8px 10px;
-      margin-bottom: 6px;
-      border-radius: 10px;
-      color: var(--text-dim);
-      border-left: 3px solid transparent;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      margin-bottom: 2px;
+      border-radius: 8px;
+      color: rgba(244, 244, 245, 0.22);
+      filter: blur(4px);
+      transition: color 0.55s ease, filter 0.55s ease, font-size 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      cursor: pointer;
+      user-select: none;
+      will-change: filter, color, font-size;
     }
     .transcript-line.active {
-      background: rgba(255,255,255,0.1);
+      background: transparent;
       color: var(--text);
-      border-left-color: var(--accent-bright);
+      font-size: 16px;
+      font-weight: 600;
+      filter: none;
+    }
+
+    .player-container {
+      margin-top: 20px;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.24);
+    }
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin: 8px 0 16px;
+      font-variant-numeric: tabular-nums;
+    }
+    .player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .player-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+      color: rgba(255, 255, 255, 0.7);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 18px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      padding: 0;
+      position: relative;
+    }
+    .player-btn:hover {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+      border-color: rgba(255, 255, 255, 0.34);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+    .player-btn:active {
+      transform: translateY(0) scale(0.95);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .player-btn:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 2px;
+    }
+    .player-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      fill: currentColor;
+    }
+    .player-btn i {
+      font-size: 17px;
+      line-height: 1;
+    }
+    .player-btn .seek-sec {
+      position: absolute;
+      right: 8px;
+      bottom: 7px;
+      font-size: 8px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+    }
+    .player-btn-large {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.82));
+      color: rgba(15, 15, 15, 0.88);
+      font-size: 18px;
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+    .player-btn-large:hover {
+      background: linear-gradient(135deg, #ffffff, rgba(255, 255, 255, 0.9));
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+    .player-btn-large:active {
+      transform: translateY(0) scale(0.96);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+    .player-btn-large svg {
+      width: 18px;
+      height: 20px;
+      fill: currentColor;
+      display: block;
+    }
+    .player-btn-large i {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .progress-track {
+      height: 4px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72));
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+      pointer-events: none;
+    }
+
+    @media (max-width: 390px) {
+      .play-fab-glass {
+        width: 56px;
+        height: 56px;
+        right: 16px;
+      }
     }
 
     .bottom-ui {
@@ -818,7 +1108,7 @@
       bottom: 0;
       z-index: 10;
       padding: 8px 16px calc(10px + var(--safe-bottom));
-      background: linear-gradient(180deg, transparent, rgba(5, 18, 12, 0.94) 35%);
+      background: linear-gradient(180deg, transparent, rgba(13, 13, 13, 0.96) 35%);
       pointer-events: none;
     }
     .bottom-ui > * { pointer-events: auto; }
@@ -838,56 +1128,8 @@
       touch-action: manipulation;
     }
     .segment.active {
-      height: 6px;
-      background: #fff;
-      margin-top: -1px;
-    }
-
-    .swipe-hint-mini {
-      text-align: center;
-      font-size: 10px;
-      color: rgba(244, 251, 247, 0.45);
-      margin-top: 8px;
-      letter-spacing: 0.02em;
-    }
-
-    /* demo 主题切换 chip（前端同学可重新设计样式） */
-    .demo-chips {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 0 0 12px;
-    }
-    .demo-chip {
-      padding: 7px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      font-family: inherit;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(0, 0, 0, 0.22);
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s, color 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .demo-chip.active {
-      background: var(--accent);
-      border-color: var(--accent-bright);
-      color: var(--text);
-    }
-    .demo-chip.is-pending {
-      opacity: 0.6;
-      font-style: italic;
-    }
-    .app.demo-pending .play-fab-glass {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .app.demo-pending .hero-brief-foot {
-      opacity: 0.5;
+      height: 4px;
+      background: rgba(255,255,255,0.72);
     }
 
     /* 模态：设置 */
@@ -906,29 +1148,83 @@
     .modal-sheet {
       width: 100%;
       max-width: 480px;
-      background: #122b1f;
+      background: #121212;
       border-radius: 20px 20px 0 0;
       padding: 20px 20px calc(24px + var(--safe-bottom));
       border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 -12px 36px rgba(0,0,0,0.35);
     }
     .modal-sheet h2 { font-size: 17px; margin-bottom: 16px; }
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
-    .field input[type="range"] { width: 100%; }
+    .field input[type="range"] {
+      width: 100%;
+      height: 24px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    .field input[type="range"]:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 4px;
+      border-radius: 10px;
+    }
+    .field input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+    }
+    .field input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      margin-top: -7px;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+    .field input[type="range"]:active::-webkit-slider-thumb {
+      transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .field input[type="range"]::-moz-range-track {
+      height: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+    }
+    .field input[type="range"]::-moz-range-progress {
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72));
+    }
+    .field input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
     .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .pill {
       padding: 8px 14px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.14);
       background: transparent;
-      color: var(--text);
+      color: rgba(255,255,255,0.6);
       font-size: 13px;
       cursor: pointer;
       font-family: inherit;
     }
     .pill.selected {
-      background: var(--accent);
-      border-color: var(--accent);
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      color: #fff;
     }
     .modal-actions { margin-top: 18px; display: flex; gap: 10px; }
     .modal-actions button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-family: inherit; }
@@ -938,7 +1234,7 @@
       font-size: 11px;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      color: rgba(92, 184, 138, 0.85);
+      color: rgba(255,255,255,0.42);
       letter-spacing: 0.04em;
       margin-bottom: 6px;
     }
@@ -946,13 +1242,13 @@
     /* 收藏来源：黄色实心星 = 取消本条收录 */
     .btn-star-remove {
       position: absolute;
-      top: 10px;
+      top: calc(50% - 18px);
       right: 10px;
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      border: 1px solid rgba(232, 185, 35, 0.45);
-      background: rgba(22, 18, 6, 0.55);
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
       cursor: pointer;
       z-index: 2;
       display: grid;
@@ -962,7 +1258,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn-star-remove:active {
-      background: rgba(50, 40, 8, 0.75);
+      background: rgba(255,255,255,0.1);
       transform: scale(0.96);
     }
     .btn-star-remove .icon-star path {
@@ -971,35 +1267,50 @@
     /* 推荐页缩略图：空心 / 实心收藏星 */
     .thumb-fav {
       position: absolute;
-      top: 4px;
-      right: 4px;
+      top: calc(50% - 18px);
+      right: 10px;
       z-index: 2;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      border: none;
-      background: rgba(0, 0, 0, 0.42);
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: grid;
       place-items: center;
       padding: 0;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      transition: all 0.2s ease;
+    }
+    .thumb-fav:hover {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+      transform: translateY(-1px);
+    }
+    .thumb-fav:active {
+      transform: scale(0.96);
+    }
+    .thumb-fav:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 2px;
     }
     .thumb-fav .icon-star path {
       transition: fill 0.2s ease, stroke 0.2s ease;
     }
     .thumb-fav.is-saved {
-      background: rgba(40, 32, 6, 0.65);
+      background: rgba(255,255,255,0.1);
     }
     .thumb-fav.is-saved .icon-star path {
-      fill: #F0C330;
-      stroke: #D4A017;
+      fill: #ffffff;
+      stroke: rgba(255,255,255,0.9);
       stroke-width: 0.5;
     }
     .thumb-fav:not(.is-saved) .icon-star path {
       fill: none;
-      stroke: #F0C330;
+      stroke: rgba(255,255,255,0.75);
       stroke-width: 1.65;
       stroke-linejoin: round;
     }
@@ -1009,17 +1320,26 @@
       margin-bottom: 12px;
     }
     .btn-clear-sources {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 160, 140, 0.4);
-      background: rgba(48, 20, 16, 0.35);
-      color: rgba(255, 215, 205, 0.95);
-      font-size: 14px;
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+      flex: 0 0 auto;
+      padding: 5px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
       touch-action: manipulation;
+    }
+    .btn-clear-sources:hover:not(:disabled) {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.78);
     }
     .btn-clear-sources:disabled {
       opacity: 0.4;
@@ -1032,13 +1352,25 @@
       padding: 28px 12px;
       line-height: 1.5;
     }
-
-    .page-indicator {
-      text-align: center;
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-bottom: 6px;
+    #sourceList,
+    #recList {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y pinch-zoom;
+      padding-bottom: 10px;
     }
+    .list-end-hint {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(244, 244, 245, 0.45);
+      padding: 8px 0 4px;
+      letter-spacing: 0.02em;
+      user-select: none;
+    }
+
   </style>
 </head>
 <body>
@@ -1075,7 +1407,6 @@
         <section class="page page-home" data-page="0" aria-label="播放">
           <div class="hero-stack">
             <p class="home-eyebrow">Morncast</p>
-            <div class="demo-chips" id="demoChips" role="tablist" aria-label="主题切换"></div>
             <article class="hero-brief-card">
               <div class="hero-brief-media" aria-hidden="true">
                 <img class="hero-brief-photo" src="assets/hero-daily-brief.png" alt="" width="800" height="1200" decoding="async" fetchpriority="high" />
@@ -1102,72 +1433,138 @@
                 <span>耳机就绪</span>
               </footer>
               <button type="button" class="play-fab-glass" id="btnPlayMain" aria-label="播放或暂停">
-                <span class="play-fab-icon" id="playFabIcon">▶</span>
+                <i class="play-fab-icon fa-solid fa-play" id="playFabIcon"></i>
               </button>
             </article>
           </div>
         </section>
 
-        <!-- 第 2 页：逐字稿；章节大纲在逐字稿下方展开 -->
+        <!-- 第 2 页：逐字稿；播放器在下方 -->
         <section class="page page-transcript" data-page="1" aria-label="逐字稿">
-          <div class="glass-card transcript-toolbar">
-            <div class="transcript-toolbar-row">
-              <button type="button" class="btn-outline" id="btnOpenOutline">章节大纲</button>
-              <div class="transcript-toolbar-actions">
-                <span class="transcript-status"><span id="timeCurrent">00:00</span> / <span id="timeTotal">18:32</span></span>
-                <button type="button" class="btn-icon-ghost" id="btnSettings" aria-label="播放设置">⚙</button>
-              </div>
-            </div>
+          <div class="transcript-panel">
+            <div class="transcript" id="transcript"></div>
+          </div>
+          <div class="player-container player-container-shared" data-player="transcript">
             <div class="progress-track" id="mainProgress" role="slider" aria-valuemin="0" aria-valuemax="1112" aria-valuenow="0" tabindex="0">
               <div class="progress-fill" id="mainProgressFill"></div>
             </div>
-          </div>
-          <div class="section-title">逐字稿</div>
-          <div class="transcript-panel">
-            <div class="transcript" id="transcript"></div>
-            <div class="outline-drawer" id="outlineDrawer" aria-hidden="true">
-              <div class="outline-drawer-card">
-                <h2 id="outlineTitle">章节大纲</h2>
-                <p class="outline-drawer-hint">点击章节跳转播放；当前章节会随进度高亮。</p>
-                <div class="chapter-list" id="chapterListModal"></div>
-                <div class="modal-actions outline-drawer-actions">
-                  <button type="button" class="btn-close-sheet" id="btnCloseOutline">收起</button>
-                </div>
-              </div>
+            <div class="time-row">
+              <span id="timeCurrent" class="time-current">00:00</span>
+              <span id="timeTotal">18:32</span>
+            </div>
+            <div class="player-controls">
+              <button type="button" class="player-btn btn-open-settings" id="btnSettings" aria-label="播放设置">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="player-btn btn-rewind" id="btnRewind" aria-label="回退15秒">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                <span class="seek-sec" aria-hidden="true">15</span>
+              </button>
+              <button type="button" class="player-btn player-btn-large btn-play-toggle" id="btnPlay" aria-label="播放或暂停">
+                <i id="playIcon" class="play-icon fa-solid fa-play" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="player-btn btn-forward" id="btnForward" aria-label="快进15秒">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                <span class="seek-sec" aria-hidden="true">15</span>
+              </button>
+              <button type="button" class="player-btn btn-open-outline" id="btnOpenOutline" aria-label="章节大纲">
+                <i class="fa-solid fa-list" aria-hidden="true"></i>
+              </button>
             </div>
           </div>
         </section>
 
         <!-- 第 3 页：收藏来源 -->
         <section class="page page-sources" data-page="2" aria-label="收藏来源">
-          <div class="glass-card" style="margin-bottom:10px;padding:14px 16px">
-            <h2 class="hero-title" style="font-size:17px;margin-bottom:8px">稍后再看 · 本期收录</h2>
-            <p class="summary-text" style="margin:0">来自你主动收藏的知识向内容；点击黄色星标可从列表移除（演示）。</p>
+          <div class="sources-panel">
+            <div class="header-row">
+              <h2 class="header-title">本期收录</h2>
+              <button type="button" class="btn-clear-sources" id="btnClearAllSources">取消收藏</button>
+            </div>
+            <div id="sourceList"></div>
           </div>
-          <div class="section-title">来源</div>
-          <div class="sources-toolbar">
-            <button type="button" class="btn-clear-sources" id="btnClearAllSources">一键取消全部收藏</button>
+          <div class="player-container player-container-shared" data-player="sources">
+            <div class="progress-track" role="slider" aria-valuemin="0" aria-valuemax="1112" aria-valuenow="0" tabindex="0">
+              <div class="progress-fill"></div>
+            </div>
+            <div class="time-row">
+              <span class="time-current">00:00</span>
+              <span>18:32</span>
+            </div>
+            <div class="player-controls">
+              <button type="button" class="player-btn btn-open-settings" aria-label="播放设置">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="player-btn btn-rewind" aria-label="回退15秒">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                <span class="seek-sec" aria-hidden="true">15</span>
+              </button>
+              <button type="button" class="player-btn player-btn-large btn-play-toggle" aria-label="播放或暂停">
+                <i class="play-icon fa-solid fa-play" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="player-btn btn-forward" aria-label="快进15秒">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                <span class="seek-sec" aria-hidden="true">15</span>
+              </button>
+              <button type="button" class="player-btn btn-open-outline" aria-label="章节大纲">
+                <i class="fa-solid fa-list" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
-          <div id="sourceList"></div>
         </section>
 
         <!-- 第 4 页：推荐 -->
         <section class="page page-rec" data-page="3" aria-label="推荐">
-          <div class="glass-card" style="margin-bottom:10px;padding:14px 16px">
-            <h2 class="hero-title" style="font-size:17px;margin-bottom:8px">延伸推荐</h2>
-            <p class="summary-text" style="margin:0">与本期话题相关的更多视频，点击缩略图即可跳转（演示）。</p>
+          <div class="rec-panel">
+            <div class="header-row">
+              <h2 class="header-title">猜你想听</h2>
+            </div>
+            <div id="recList"></div>
           </div>
-          <div class="section-title">推荐</div>
-          <div id="recList"></div>
+          <div class="player-container player-container-shared" data-player="recommend">
+            <div class="progress-track" role="slider" aria-valuemin="0" aria-valuemax="1112" aria-valuenow="0" tabindex="0">
+              <div class="progress-fill"></div>
+            </div>
+            <div class="time-row">
+              <span class="time-current">00:00</span>
+              <span>18:32</span>
+            </div>
+            <div class="player-controls">
+              <button type="button" class="player-btn btn-open-settings" aria-label="播放设置">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="player-btn btn-rewind" aria-label="回退15秒">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                <span class="seek-sec" aria-hidden="true">15</span>
+              </button>
+              <button type="button" class="player-btn player-btn-large btn-play-toggle" aria-label="播放或暂停">
+                <i class="play-icon fa-solid fa-play" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="player-btn btn-forward" aria-label="快进15秒">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                <span class="seek-sec" aria-hidden="true">15</span>
+              </button>
+              <button type="button" class="player-btn btn-open-outline" aria-label="章节大纲">
+                <i class="fa-solid fa-list" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
         </section>
 
       </div>
     </div>
 
+    <div class="outline-drawer" id="outlineDrawer" aria-hidden="true">
+      <button type="button" class="outline-drawer-dismiss" id="btnDismissOutline" aria-label="关闭章节大纲"></button>
+      <div class="outline-drawer-card">
+        <h2 id="outlineTitle">章节大纲</h2>
+        <p class="outline-drawer-hint">点击章节跳转播放；当前章节会随进度高亮。</p>
+        <div class="chapter-list" id="chapterListModal"></div>
+      </div>
+    </div>
+
     <div class="bottom-ui">
-      <div class="page-indicator" id="pageLabel">第 1 / 4 页 · 播放</div>
       <div class="segment-bar" id="segmentBar" role="tablist" aria-label="页面进度"></div>
-      <p class="swipe-hint-mini">左右滑动 · 共四页</p>
     </div>
     </div>
 
@@ -1175,7 +1572,7 @@
       <div class="modal-sheet">
         <h2 id="settingsTitle">播放设置</h2>
         <div class="field">
-          <label for="durationCap">本期最大时长偏好（演示）</label>
+          <label for="durationCap">本期最大时长偏好</label>
           <input type="range" id="durationCap" min="5" max="30" value="20" />
           <div style="font-size:12px;color:var(--text-dim);margin-top:4px">当前上限：<span id="durationCapVal">20</span> 分钟</div>
         </div>
@@ -1206,13 +1603,6 @@
   const carousel = document.getElementById("carousel");
   const app = document.getElementById("app");
   const segmentBar = document.getElementById("segmentBar");
-  const pageLabel = document.getElementById("pageLabel");
-  const labels = [
-    "第 1 / 4 页 · 播放",
-    "第 2 / 4 页 · 逐字稿",
-    "第 3 / 4 页 · 收藏来源",
-    "第 4 / 4 页 · 推荐",
-  ];
 
   let chapters = [];
   let transcriptLines = [];
@@ -1228,14 +1618,6 @@
 
   let recommendations = [];
 
-  const DEMOS = [
-    { id: "ai", topic: "AI 编程", endpoint: "/api/brief" },
-    { id: "intern", topic: "实习生", endpoint: "/assets/demos/intern/meta.json" },
-    { id: "pet", topic: "宠物科普", endpoint: "/assets/demos/pet/meta.json" },
-  ];
-  let demosData = [];
-  let currentDemoIndex = 0;
-
   let currentSec = 0;
   let playing = false;
   let rafId = null;
@@ -1244,6 +1626,7 @@
   let lastTranscriptActiveIdx = -1;
   let transcriptTouchLockUntil = 0;
   let programmaticTranscriptScroll = false;
+  let transcriptAutoScrollTimer = null;
 
   function pad(n) { return String(Math.floor(n)).padStart(2, "0"); }
   function fmt(sec) {
@@ -1296,7 +1679,11 @@
 
   function renderTranscript() {
     const t = document.getElementById("transcript");
-    t.innerHTML = "";
+
+    const topSpacer = document.createElement("div");
+    topSpacer.id = "transcriptSpacerTop";
+    t.appendChild(topSpacer);
+
     transcriptLines.forEach((line, i) => {
       const div = document.createElement("p");
       div.className = "transcript-line";
@@ -1305,74 +1692,83 @@
       div.textContent = line.text;
       t.appendChild(div);
     });
+
+    const bottomSpacer = document.createElement("div");
+    bottomSpacer.id = "transcriptSpacerBottom";
+    t.appendChild(bottomSpacer);
+  }
+
+  function updateTranscriptSpacers() {
+    const container = document.getElementById("transcript");
+    const top = document.getElementById("transcriptSpacerTop");
+    const bottom = document.getElementById("transcriptSpacerBottom");
+    if (!container || !top || !bottom) return;
+    const h = container.clientHeight / 2;
+    top.style.height = h + "px";
+    bottom.style.height = h + "px";
   }
 
   function updateClearSourcesButton() {
     const btn = document.getElementById("btnClearAllSources");
-    if (btn) btn.disabled = sourcesList.length === 0;
+    if (btn) btn.disabled = sourcesList.every((s) => !s.saved);
   }
 
   function renderSources() {
     const wrap = document.getElementById("sourceList");
     wrap.innerHTML = "";
-    if (sourcesList.length === 0) {
-      wrap.innerHTML = "<p class=\"source-empty-hint\">暂无收录内容。</p>";
-      updateClearSourcesButton();
-      return;
-    }
-    sourcesList.forEach((item, idx) => {
+    sourcesList.forEach((item) => {
       const card = document.createElement("article");
       card.className = "list-card";
       card.dataset.id = item.id;
-      if (item.videoUrl) card.style.cursor = "pointer";
       card.innerHTML = `
-        <button type="button" class="btn-star-remove" title="取消收录" aria-label="取消本条收藏">${svgStarSolid()}</button>
+        <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图">
+          <span class="thumb-duration">${item.duration}</span>
+        </div>
         <div class="feed-body">
-          <div class="feed-index">第 ${String(idx + 1).padStart(2, "0")} 条</div>
           <h3 class="feed-title">${item.title}</h3>
           <div class="list-meta">
-            <span class="author-pill"><span class="avatar" aria-hidden="true"></span>${item.author}</span>
-            <span class="snippet-line">${item.snippet}</span>
+            <span>${item.author}</span>
           </div>
         </div>
-        <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图"><span class="thumb-play" aria-hidden="true">▶</span></div>
+        <button type="button" class="btn-star-remove" aria-label="${item.saved ? "取消收藏" : "收藏"}" aria-pressed="${item.saved}">${item.saved ? svgStarSolid() : svgStarOutline()}</button>
       `;
       card.querySelector(".btn-star-remove").addEventListener("click", (e) => {
         e.stopPropagation();
-        sourcesList = sourcesList.filter((s) => s.id !== item.id);
-        renderSources();
+        item.saved = !item.saved;
+        const btn = e.currentTarget;
+        btn.innerHTML = item.saved ? svgStarSolid() : svgStarOutline();
+        btn.setAttribute("aria-label", item.saved ? "取消收藏" : "收藏");
+        btn.setAttribute("aria-pressed", item.saved);
+        updateClearSourcesButton();
       });
-      if (item.videoUrl) {
-        card.addEventListener("click", (e) => {
-          if (e.target.closest(".btn-star-remove")) return;
-          window.open(item.videoUrl, "_blank");
-        });
-      }
       wrap.appendChild(card);
     });
+
+    const endHint = document.createElement("p");
+    endHint.className = "list-end-hint";
+    endHint.textContent = "已经到底了";
+    wrap.appendChild(endHint);
+
     updateClearSourcesButton();
   }
 
   function renderRecs() {
     const wrap = document.getElementById("recList");
     wrap.innerHTML = "";
-    recommendations.forEach((item, idx) => {
+    recommendations.forEach((item) => {
       const card = document.createElement("article");
       card.className = "list-card";
-      if (item.videoUrl) card.style.cursor = "pointer";
       card.innerHTML = `
+        <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图">
+          <span class="thumb-duration">${item.duration}</span>
+        </div>
         <div class="feed-body">
-          <div class="feed-index">推荐 ${String(idx + 1).padStart(2, "0")}</div>
           <h3 class="feed-title">${item.title}</h3>
           <div class="list-meta">
-            <span class="author-pill"><span class="avatar" aria-hidden="true"></span>${item.author}</span>
-            <span class="snippet-line">${item.snippet}</span>
+            <span>${item.author}</span>
           </div>
         </div>
-        <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图">
-          <button type="button" class="thumb-fav" aria-label="收藏" aria-pressed="false">${svgStarOutline()}</button>
-          <span class="thumb-play" aria-hidden="true">▶</span>
-        </div>
+        <button type="button" class="thumb-fav" aria-label="收藏" aria-pressed="false">${svgStarOutline()}</button>
       `;
       const fav = card.querySelector(".thumb-fav");
       fav.addEventListener("click", (e) => {
@@ -1382,40 +1778,47 @@
         fav.setAttribute("aria-label", saved ? "已收藏，点击取消" : "收藏");
         fav.innerHTML = saved ? svgStarSolid() : svgStarOutline();
       });
-      if (item.videoUrl) {
-        card.addEventListener("click", (e) => {
-          if (e.target.closest(".thumb-fav")) return;
-          window.open(item.videoUrl, "_blank");
-        });
-      }
       wrap.appendChild(card);
     });
+
+    const endHint = document.createElement("p");
+    endHint.className = "list-end-hint";
+    endHint.textContent = "已经到底了";
+    wrap.appendChild(endHint);
   }
 
   function scrollLineIntoTranscriptViewport(container, child) {
     if (!container || !child) return;
-    const cr = container.getBoundingClientRect();
-    const er = child.getBoundingClientRect();
-    const pad = 10;
-    let delta = 0;
-    if (er.top < cr.top + pad) delta = er.top - cr.top - pad;
-    else if (er.bottom > cr.bottom - pad) delta = er.bottom - cr.bottom + pad;
-    if (delta === 0) return;
+    const target = child.offsetTop - (container.clientHeight - child.offsetHeight) / 2;
+    const maxTop = Math.max(container.scrollHeight - container.clientHeight, 0);
+    const nextTop = Math.min(Math.max(target, 0), maxTop);
+    if (Math.abs(container.scrollTop - nextTop) < 1) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     programmaticTranscriptScroll = true;
-    container.scrollTop += delta;
-    requestAnimationFrame(() => {
-      programmaticTranscriptScroll = false;
+    container.scrollTo({
+      top: nextTop,
+      behavior: reduceMotion ? "auto" : "smooth",
     });
+
+    if (transcriptAutoScrollTimer) clearTimeout(transcriptAutoScrollTimer);
+    transcriptAutoScrollTimer = setTimeout(() => {
+      programmaticTranscriptScroll = false;
+      transcriptAutoScrollTimer = null;
+    }, reduceMotion ? 0 : 260);
   }
 
   function updateProgressUI() {
     const p = (currentSec / TOTAL_SEC) * 100;
-    const fill = document.getElementById("mainProgressFill");
-    if (fill) fill.style.width = p + "%";
-    const tc = document.getElementById("timeCurrent");
-    if (tc) tc.textContent = fmt(currentSec);
-    const mp = document.getElementById("mainProgress");
-    if (mp) mp.setAttribute("aria-valuenow", String(Math.floor(currentSec)));
+    document.querySelectorAll(".progress-fill").forEach((fill) => {
+      fill.style.width = p + "%";
+    });
+    document.querySelectorAll(".time-current").forEach((tc) => {
+      tc.textContent = fmt(currentSec);
+    });
+    document.querySelectorAll(".progress-track").forEach((track) => {
+      track.setAttribute("aria-valuenow", String(Math.floor(currentSec)));
+    });
 
     let activeIdx = -1;
     for (let i = 0; i < transcriptLines.length; i++) {
@@ -1423,19 +1826,39 @@
       const end = next ? next.start : TOTAL_SEC;
       if (currentSec >= transcriptLines[i].start && currentSec < end) activeIdx = i;
     }
+
+    // Toggle active class every frame (lightweight)
     document.querySelectorAll(".transcript-line").forEach((el, i) => {
       el.classList.toggle("active", i === activeIdx);
     });
 
-    if (activeIdx >= 0 && activeIdx !== lastTranscriptActiveIdx) {
+    // Update progressive blur + scroll only when active line changes
+    if (activeIdx !== lastTranscriptActiveIdx) {
       lastTranscriptActiveIdx = activeIdx;
-      const container = document.getElementById("transcript");
-      const activeEl = container && container.querySelector(`.transcript-line[data-index="${activeIdx}"]`);
-      if (container && activeEl && Date.now() > transcriptTouchLockUntil) {
-        scrollLineIntoTranscriptViewport(container, activeEl);
+
+      const allLines = document.querySelectorAll(".transcript-line");
+      allLines.forEach((el, i) => {
+        if (i === activeIdx || activeIdx < 0) {
+          el.style.removeProperty("color");
+          el.style.removeProperty("filter");
+          return;
+        }
+        const dist = Math.abs(i - activeIdx);
+        // Progressive: each step further adds blur and reduces opacity
+        const blur = Math.min(dist * 1.15, 5.5);
+        const opacity = Math.max(0.14, 0.58 - dist * 0.11);
+        el.style.color = `rgba(244,244,245,${opacity.toFixed(2)})`;
+        el.style.filter = `blur(${blur.toFixed(1)}px)`;
+      });
+
+      if (activeIdx >= 0) {
+        const container = document.getElementById("transcript");
+        const activeEl = container && container.querySelector(`.transcript-line[data-index="${activeIdx}"]`);
+        if (container && activeEl && Date.now() > transcriptTouchLockUntil) {
+          scrollLineIntoTranscriptViewport(container, activeEl);
+        }
       }
     }
-    if (activeIdx < 0) lastTranscriptActiveIdx = -1;
 
     chapters.forEach((c, i) => {
       const next = chapters[i + 1];
@@ -1449,13 +1872,26 @@
   function seekTo(sec) {
     currentSec = Math.min(Math.max(sec, 0), TOTAL_SEC);
     lastTranscriptActiveIdx = -1;
-    if (audioEl.src) audioEl.currentTime = currentSec;
+    if (audioEl.src) {
+      try { audioEl.currentTime = currentSec; } catch (_) {}
+    }
     updateProgressUI();
   }
 
+  function syncPlayIcons() {
+    const fab = document.getElementById("playFabIcon");
+    if (fab) {
+      fab.classList.toggle("fa-play", !playing);
+      fab.classList.toggle("fa-pause", playing);
+    }
+    document.querySelectorAll(".play-icon").forEach((icon) => {
+      icon.classList.toggle("fa-play", !playing);
+      icon.classList.toggle("fa-pause", playing);
+    });
+  }
+
   function togglePlay() {
-    const demo = demosData[currentDemoIndex];
-    if (!demo || !demo.audioUrl || demo.status === "pending") return;
+    if (!audioEl.src) return;
     if (audioEl.paused) audioEl.play().catch(() => {});
     else audioEl.pause();
   }
@@ -1463,14 +1899,12 @@
   audioEl.addEventListener("play", () => {
     playing = true;
     app.classList.add("playing");
-    const icon = document.getElementById("playFabIcon");
-    if (icon) icon.textContent = "❚❚";
+    syncPlayIcons();
   });
   audioEl.addEventListener("pause", () => {
     playing = false;
     app.classList.remove("playing");
-    const icon = document.getElementById("playFabIcon");
-    if (icon) icon.textContent = "▶";
+    syncPlayIcons();
   });
   audioEl.addEventListener("timeupdate", () => {
     currentSec = audioEl.currentTime;
@@ -1501,25 +1935,33 @@
   function onScroll() {
     const i = Math.round(carousel.scrollLeft / carousel.clientWidth);
     document.querySelectorAll(".segment").forEach((seg, idx) => seg.classList.toggle("active", idx === i));
-    pageLabel.textContent = labels[i] || labels[0];
   }
 
   function setupProgressSeek() {
-    const track = document.getElementById("mainProgress");
-    if (!track) return;
-    const setFromClientX = (clientX) => {
-      const r = track.getBoundingClientRect();
-      const ratio = Math.min(Math.max((clientX - r.left) / r.width, 0), 1);
-      seekTo(ratio * TOTAL_SEC);
-    };
-    track.addEventListener("click", (e) => setFromClientX(e.clientX));
-    let drag = false;
-    track.addEventListener("pointerdown", (e) => { drag = true; track.setPointerCapture(e.pointerId); setFromClientX(e.clientX); });
-    track.addEventListener("pointermove", (e) => { if (drag) setFromClientX(e.clientX); });
-    track.addEventListener("pointerup", () => { drag = false; });
-    track.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight") seekTo(currentSec + 15);
-      if (e.key === "ArrowLeft") seekTo(currentSec - 15);
+    const tracks = document.querySelectorAll(".progress-track");
+    tracks.forEach((track) => {
+      let drag = false;
+      const setFromClientX = (clientX) => {
+        const r = track.getBoundingClientRect();
+        const ratio = Math.min(Math.max((clientX - r.left) / r.width, 0), 1);
+        seekTo(ratio * TOTAL_SEC);
+      };
+      track.addEventListener("click", (e) => setFromClientX(e.clientX));
+      track.addEventListener("pointerdown", (e) => {
+        drag = true;
+        track.setPointerCapture(e.pointerId);
+        setFromClientX(e.clientX);
+      });
+      track.addEventListener("pointermove", (e) => {
+        if (drag) setFromClientX(e.clientX);
+      });
+      track.addEventListener("pointerup", () => {
+        drag = false;
+      });
+      track.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") seekTo(currentSec + 15);
+        if (e.key === "ArrowLeft") seekTo(currentSec - 15);
+      });
     });
   }
 
@@ -1543,23 +1985,58 @@
   }
 
   document.getElementById("btnPlayMain").addEventListener("click", togglePlay);
+  document.querySelectorAll(".btn-play-toggle").forEach((btn) => {
+    btn.addEventListener("click", togglePlay);
+  });
 
   document.getElementById("btnClearAllSources").addEventListener("click", () => {
-    if (sourcesList.length === 0) return;
-    sourcesList = [];
-    renderSources();
+    sourcesList.forEach((item) => { item.saved = false; });
+    document.querySelectorAll("#sourceList .btn-star-remove").forEach((btn) => {
+      btn.innerHTML = svgStarOutline();
+      btn.setAttribute("aria-label", "收藏");
+      btn.setAttribute("aria-pressed", "false");
+    });
+    updateClearSourcesButton();
   });
 
-  document.getElementById("btnSettings").addEventListener("click", () => {
-    document.getElementById("modalSettings").classList.add("open");
+  document.querySelectorAll(".btn-open-settings").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("modalSettings").classList.add("open");
+    });
   });
 
-  document.getElementById("btnOpenOutline").addEventListener("click", () => {
-    const d = document.getElementById("outlineDrawer");
-    if (d.classList.contains("is-open")) closeOutlineDrawer();
-    else openOutlineDrawer();
+  document.querySelectorAll(".btn-open-outline").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const d = document.getElementById("outlineDrawer");
+      if (d.classList.contains("is-open")) closeOutlineDrawer();
+      else openOutlineDrawer();
+    });
   });
-  document.getElementById("btnCloseOutline").addEventListener("click", closeOutlineDrawer);
+  document.getElementById("btnDismissOutline").addEventListener("click", closeOutlineDrawer);
+
+  // 添加回退15秒和快进15秒功能
+  document.querySelectorAll(".btn-rewind").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      seekTo(currentSec - 15);
+    });
+  });
+
+  document.querySelectorAll(".btn-forward").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      seekTo(currentSec + 15);
+    });
+  });
+
+  // 添加文字稿点击跳转功能
+  function setupTranscriptClick() {
+    const transcriptLines = document.querySelectorAll(".transcript-line");
+    transcriptLines.forEach((line) => {
+      line.addEventListener("click", () => {
+        const start = parseFloat(line.dataset.start);
+        seekTo(start);
+      });
+    });
+  }
 
   const transcriptEl = document.getElementById("transcript");
   transcriptEl.addEventListener("touchstart", () => {
@@ -1582,110 +2059,91 @@
 
   carousel.addEventListener("scroll", onScroll, { passive: true });
 
+  function applyTitleMarquees() {
+    // Wrap each card title in a span so the title element clips and the span scrolls
+    document.querySelectorAll(".list-card .feed-title").forEach((titleEl) => {
+      if (titleEl.querySelector(".title-inner")) return; // already applied
+      const text = titleEl.textContent;
+      titleEl.textContent = "";
+      const inner = document.createElement("span");
+      inner.className = "title-inner";
+      inner.textContent = text;
+      titleEl.appendChild(inner);
+
+      const overflow = inner.scrollWidth - titleEl.clientWidth;
+      if (overflow > 4) {
+        const dist = overflow + 20; // small gap after text before looping
+        // speed: 50px/s; scrolling occupies 65% of the total duration
+        const dur = Math.max(3, dist / (50 * 0.65));
+        inner.style.setProperty("--marquee-dist", `-${dist}px`);
+        inner.style.setProperty("--marquee-dur", `${dur.toFixed(1)}s`);
+        inner.classList.add("is-scrolling");
+      }
+    });
+  }
+
   buildWaveBars();
   buildSegments();
   setupProgressSeek();
   setupSpeedPills();
 
-  function hydrateDemo(index) {
-    if (index < 0 || index >= demosData.length) return;
-    const demo = demosData[index];
+  if (window.ResizeObserver) {
+    new ResizeObserver(updateTranscriptSpacers).observe(document.getElementById("transcript"));
+  }
 
-    audioEl.pause();
-    if (audioEl.src) {
-      try { audioEl.currentTime = 0; } catch (_) {}
+  function hydrate(brief) {
+    chapters = brief.chapters || [];
+    transcriptLines = brief.transcriptLines || [];
+    sourcesList = (brief.sources || []).map((s) => Object.assign({}, s, {
+      saved: true,
+      duration: s.duration || "—:—",
+    }));
+    recommendations = (brief.recommendations || []).map((r) => Object.assign({}, r, {
+      duration: r.duration || "—:—",
+    }));
+    TOTAL_SEC = brief.totalSec || 0;
+
+    if (brief.title) {
+      const tagline = document.querySelector(".hero-brief-tagline");
+      if (tagline) tagline.textContent = brief.title;
     }
-    currentSec = 0;
-    lastTranscriptActiveIdx = -1;
-    currentDemoIndex = index;
-
-    chapters = demo.chapters || [];
-    transcriptLines = demo.transcriptLines || [];
-    sourcesList = demo.sources || [];
-    recommendations = demo.recommendations || [];
-    TOTAL_SEC = demo.totalSec || 0;
-
-    const tagline = document.querySelector(".hero-brief-tagline");
-    if (tagline) tagline.textContent = demo.title || demo.topic || "Morncast";
-
-    const playable = !!demo.audioUrl && demo.status !== "pending";
-    if (playable) {
-      audioEl.src = demo.audioUrl;
+    document.querySelectorAll("#timeTotal, .player-container .time-row span:last-child").forEach((el) => {
+      el.textContent = fmt(TOTAL_SEC);
+    });
+    if (brief.audioUrl) {
+      audioEl.src = brief.audioUrl;
       audioEl.playbackRate = playbackRate;
-    } else {
-      audioEl.removeAttribute("src");
-    }
-    app.classList.toggle("demo-pending", !playable);
-    const playBtn = document.getElementById("btnPlayMain");
-    if (playBtn) {
-      playBtn.disabled = !playable;
-      playBtn.setAttribute("aria-disabled", playable ? "false" : "true");
     }
 
     renderChapters();
     renderTranscript();
+    setupTranscriptClick();
     renderSources();
     renderRecs();
     updateProgressUI();
-    renderDemoChips();
-  }
-
-  function renderDemoChips() {
-    const wrap = document.getElementById("demoChips");
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    demosData.forEach((demo, idx) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      const active = idx === currentDemoIndex;
-      const pending = demo.status === "pending";
-      btn.className = "demo-chip" + (active ? " active" : "") + (pending ? " is-pending" : "");
-      btn.dataset.demoIndex = String(idx);
-      btn.setAttribute("role", "tab");
-      btn.setAttribute("aria-selected", active ? "true" : "false");
-      btn.textContent = demo.topic + (pending ? " · 即将" : "");
-      btn.addEventListener("click", () => hydrateDemo(idx));
-      wrap.appendChild(btn);
+    requestAnimationFrame(() => {
+      applyTitleMarquees();
+      updateTranscriptSpacers();
     });
   }
 
-  async function loadAllDemos() {
-    demosData = await Promise.all(DEMOS.map(async (config) => {
-      try {
-        const res = await fetch(config.endpoint);
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || ("HTTP " + res.status));
-        }
-        const data = await res.json();
-        return Object.assign({}, config, data);
-      } catch (e) {
-        console.warn("[demo] 加载失败:", config.id, e.message);
-        return Object.assign({}, config, {
-          status: "pending",
-          audioUrl: null,
-          _loadError: e.message,
-        });
+  async function loadBrief() {
+    try {
+      const res = await fetch("/api/brief");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || ("HTTP " + res.status));
       }
-    }));
-
-    // 主 demo（AI）必须可用，否则整页报错
-    const primary = demosData[0];
-    if (primary && primary._loadError) {
-      loadingText.textContent = "加载失败：" + primary._loadError;
+      const data = await res.json();
+      hydrate(data);
+      loadingMask.style.display = "none";
+    } catch (e) {
+      loadingText.textContent = "加载失败：" + e.message;
       loadingText.style.color = "#ff8a8a";
-      return;
     }
-
-    renderDemoChips();
-    hydrateDemo(currentDemoIndex);
-    loadingMask.style.display = "none";
   }
 
-  // 暴露给前端同学：可绑定到任意 UI（chip / 滑动手势 / 键盘）
-  window.morncastSwitchDemo = hydrateDemo;
-
-  loadAllDemos();
+  loadBrief();
 
   function tickClock() {
     const d = new Date();
