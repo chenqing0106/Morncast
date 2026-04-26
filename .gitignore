@@ -14,3 +14,6 @@ video/*.mp4
 
 # 19MB 海报，太大不进 git
 morncost-poster-2.png
+
+# Playwright 测试产物
+.playwright-mcp/
