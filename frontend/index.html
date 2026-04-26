@@ -744,6 +744,15 @@
     .thumb.t2 { background: linear-gradient(160deg, #344e41, #a3b18a); }
     .thumb.t3 { background: linear-gradient(160deg, #0d3b2e, #52b788); }
     .thumb.t4 { background: linear-gradient(160deg, #1d3557, #457b9d); }
+    .thumb-cover {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      z-index: 0;
+    }
     .thumb-duration {
       position: absolute;
       bottom: 8px;
@@ -1782,6 +1791,7 @@
       card.dataset.id = item.id;
       card.innerHTML = `
         <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图">
+          ${item.cover ? `<img class="thumb-cover" src="${encodeURI(item.cover)}" alt="" loading="lazy">` : ""}
           <span class="thumb-duration">${item.duration}</span>
         </div>
         <div class="feed-body">
@@ -1821,6 +1831,7 @@
       card.className = "list-card";
       card.innerHTML = `
         <div class="thumb ${item.thumb}" role="img" aria-label="视频缩略图">
+          ${item.cover ? `<img class="thumb-cover" src="${encodeURI(item.cover)}" alt="" loading="lazy">` : ""}
           <span class="thumb-duration">${item.duration}</span>
         </div>
         <div class="feed-body">
