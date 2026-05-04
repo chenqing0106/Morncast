@@ -109,8 +109,9 @@ uvicorn server:app --reload
 
 ## 📚 文档
 
-- 后端框架说明: [architecture](./docs/backend-plan.md)
+- 产品宣传海报: [pic](./docs/海报.png)
 - 产品说明书: [prd](./docs/PRD.pdf)
+- 后端框架说明: [architecture](./docs/backend-plan.md)
 
 
 
