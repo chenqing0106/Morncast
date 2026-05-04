@@ -4,7 +4,6 @@ data/
 __pycache__/
 *.pyc
 .DS_Store
-.env
 
 .claude
 CLAUDE.md

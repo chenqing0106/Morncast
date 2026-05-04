@@ -1,273 +1,147 @@
-# Morncast 后端跑通计划（无感版）
+# Morncast 后端系统架构说明
 
-> 目标：用户打开页面 → 直接听到由 `video/` 目录素材生成的播客，**零输入、零等待**。
->
-> 当前分支：`main`。
+面向「开箱即播」的通勤播课 Demo：**内置 `video/` 素材**，通过 **两层可缓存流水线** 生成脚本与音频，再由 **`GET /api/brief`** 聚合为前端所需 JSON。全文描述**运行时结构**与**边界**，不包含排期或个人开发清单。
 
 ---
 
-## 1. 数据源盘点（`video/` 已就绪）
+## 1. 架构总览
 
-```
-video/
-├── title.txt        # 8 条视频标题（编号 1–8）
-├── summary.txt      # 8 条视频 AI 摘要（编号 1–8，空行分隔）
-├── 强烈推荐6个自用skills.mp4
-├── OpenCode详细攻略.mp4
-├── 推荐三个超级实用的skills.mp4
-├── 让vibecoding 产品变好看的四个工具.mp4
-├── Gemini 难用到抓狂？这个开源神器直接掀桌子.mp4
-├── github开源，10w+ AI提示词写法.mp4
-├── AI编程中控 Skills.mp4
-└── 装完claudecode去哪里.mp4
-```
+| 关注点 | 说明 |
+|--------|------|
+| 运行时 | FastAPI 单进程：`server.py`，同步 HTTP + 异步 TTS 流式写入。 |
+| 入口 | **`GET /api/brief`**：主 Demo（「AI」主题）；其它主题走 **静态** `frontend/assets/demos/{id}/meta.json`（离线脚本生成，见文末）。 |
+| 机密与配置 | `LLM_*`、`TTS_*` 经由 **环境变量 / `.env`**（`python-dotenv`）；不在前端或服务端硬编码 Key。 |
 
-`title.txt` 和 `summary.txt` 都用「编号、」做锚点，能正则切成 8 条结构化记录。每条记录可以匹配到一个 mp4 文件（按编号顺序对应 `title.txt` 的行序）。
+```mermaid
+flowchart LR
+  subgraph Sources["数据源"]
+    V["video/\ntitle.txt + summary.txt +\n*.mp4"]
+  end
 
-**结论：摘要文本 + 视频文件齐全，不需要任何额外用户输入。**
+  subgraph L1["内容层 Layer 1"]
+    M["load_manifest()"]
+    B["build_script()"]
+    S1[(data/script.json)]
+    M --> B
+    B -.->|"命中则跳过 LLM"| S1
+    B -->|"未命中"| LLM["兼容 OpenAI 的 Chat API"]
+    LLM --> S1
+  end
 
----
+  subgraph L2["语音层 Layer 2"]
+    SY["synthesize()"]
+    S2[(data/timing.json)]
+    AU[(audio_cache/morncast.mp3)]
+    SY -.->|"两文件均在则跳过 TTS"| S2
+    SY -.-> AU
+    SY -->|"否则"| EDGE["Edge TTS stream"]
+    EDGE --> S2
+    EDGE --> AU
+  end
 
-## 2. 两层流水线
-
-整个后端就是两层独立的转换，各自一个函数、各自一份缓存，可以单独跑、单独重算。
-
-```
-                ┌────────────────────────────────────────┐
-Layer 1         │ build_script(manifest) → script.json   │
-（内容层 / LLM）│ video/summary.txt + title.txt          │
-                │   → 解析成 8 条结构化记录              │
-                │   → LLM 整合成播客脚本                 │
-                │ 产物：节目标题、正文、章节、推荐       │
-                │ 缓存：data/script.json                 │
-                └────────────────────────────────────────┘
-                                  │
-                                  ▼
-                ┌────────────────────────────────────────┐
-Layer 2         │ synthesize(script) → audio + timing    │
-（语音层 / TTS）│ Edge TTS stream() 合成 MP3 +           │
-                │   采集 WordBoundary 真实时间戳         │
-                │ 产物：mp3 文件、totalSec、句级时间戳   │
-                │ 缓存：audio_cache/morncast.mp3 +       │
-                │        data/timing.json                │
-                └────────────────────────────────────────┘
-                                  │
-                                  ▼
-                ┌────────────────────────────────────────┐
-对外            │ GET /api/brief                          │
-                │ = script.json + timing.json + sources   │
-                │   （sources 直接来自 manifest）         │
-                └────────────────────────────────────────┘
-```
-
-**为什么分层**：
-- 改 LLM Prompt → 只需删 `data/script.json`，TTS 不重跑（省 Edge TTS 调用）
-- 换音色/调语速 → 只需删 `audio_cache/morncast.mp3` + `data/timing.json`，LLM 不重跑（省钱）
-- 调试时可以直接打开 `data/script.json` 看脚本对不对，甚至手工改完再触发 Layer 2
-
-**前端动线不变**：
-
-```
-前端打开 /  →  GET /api/brief  →  hydrate 四个 Tab
-sources 卡片点击  →  /videos/<filename>.mp4  →  新标签页播放原视频
+  V --> M
+  S1 --> SY
 ```
 
 ---
 
-## 3. 后端要改/加的东西
+## 2. 数据源与_manifest_
 
-### Layer 0 · 公共：manifest 解析
+**主链路**依赖仓库内 **`video/`**：
 
-新增 `load_manifest()`（写在 `server.py` 顶部即可）：解析 `video/title.txt` + `video/summary.txt` → 返回 8 条结构化记录：
+- **`title.txt` / `summary.txt`**：按编号锚点解析为多「条」，与 `AUTHORS`、`video/*.mp4` 等对齐（具体规则见 `server.py` 内 `load_manifest()`）。
+- **视频文件**：经 **`/videos`** 静态挂载提供给前端跳转原片；不参与实时转码或服务端流媒体处理。
 
-```python
-[
-  {"id": 1, "title": "强烈推荐6个自用skills", "summary": "...", "videoFile": "强烈推荐6个自用skills.mp4"},
-  {"id": 2, "title": "OpenCode详细攻略",      "summary": "...", "videoFile": "OpenCode详细攻略.mp4"},
-  ...
-]
-```
-
-匹配 `videoFile`：按 title 模糊匹配 `video/*.mp4`（去空格、去标点比对），匹配失败留空。
-
-### Layer 1 · 内容层
-
-**函数**：`build_script(manifest) -> dict`
-
-输入 8 条 manifest，输出：
-
-```jsonc
-{
-  "title": "今日通勤｜AI 编程工具与 Skill 清单",
-  "script": "早上好，欢迎收听 Morncast……",      // 完整正文
-  "chapters": [{"char_start": 0, "title": "开场"}, ...],
-  "recommendations": [{"id": "r1", "title": "...", "author": "...", "snippet": "...", "thumb": "t2"}, ...]
-}
-```
-
-**缓存**：`data/script.json`，命中直接返回，未命中调 LLM 写入。
-
-**注意**：sources **不在这里生成**，避免 LLM 幻觉视频名 —— 让 manifest 直接当 sources。
-
-### Layer 2 · 语音层
-
-**函数**：`synthesize(script_text) -> dict`
-
-输入正文字符串，输出：
-
-```jsonc
-{
-  "audioFile": "audio_cache/morncast.mp3",
-  "totalSec": 240,
-  "transcriptLines": [{"start": 0, "text": "早上好..."}, ...]
-}
-```
-
-**缓存**：`audio_cache/morncast.mp3` + `data/timing.json`（句级时间戳）。两者都存在才算命中，缺一就重跑。
-
-**实现要点（WordBoundary）**：
-
-```python
-async def synthesize(script_text: str) -> dict:
-    communicate = edge_tts.Communicate(script_text, voice="zh-CN-XiaoxiaoNeural")
-    boundaries = []  # [(offset_sec, text_at_that_moment), ...]
-    with open("audio_cache/morncast.mp3", "wb") as f:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                f.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                boundaries.append((chunk["offset"] / 1e7, chunk["text"]))
-                # offset 单位是 100ns（HNS），除以 1e7 得到秒
-    # 按句号/感叹号/问号断句，每句 start = 该句首字 boundary 的 offset
-    transcript_lines = _split_to_lines_by_boundary(script_text, boundaries)
-    total_sec = boundaries[-1][0] + 1 if boundaries else 0
-    return {"audioFile": "...", "totalSec": total_sec, "transcriptLines": transcript_lines}
-```
-
-不再用 `chars_per_sec` 估算。`_split_to_lines_by_boundary` 用 `script_text` 里 `[。！？…]` 的字符位置去 boundaries 列表里找对应的真实秒数。
-
-### 对外接口
-
-**`GET /api/brief`**（替代旧的 POST `/api/generate-brief`）：
-
-```python
-def get_brief():
-    manifest = load_manifest()
-    script  = build_script(manifest)        # Layer 1，自带 cache
-    audio   = synthesize(script["script"])  # Layer 2，自带 cache
-    return {
-        **script,                            # title, chapters, recommendations
-        "audioUrl":         "/audio/morncast.mp3",
-        "totalSec":         audio["totalSec"],
-        "transcriptLines":  audio["transcriptLines"],
-        "sources": [
-            {"id": f"s{m['id']}", "title": m["title"], "snippet": m["summary"][:60],
-             "author": "抖音收藏", "thumb": f"t{((m['id']-1) % 4) + 1}",
-             "videoUrl": f"/videos/{m['videoFile']}"}
-            for m in manifest
-        ],
-    }
-```
-
-### 静态目录
-
-```python
-app.mount("/videos", StaticFiles(directory="video"), name="videos")
-```
-
-让前端 sources 卡片可以点击播放原视频。
-
-### 前端最小改动
-
-- 删除 `frontend/index.html:1174` 起的写死 `transcriptLines / SOURCES_INITIAL / recommendations / chapters`
-- 启动时 `fetch('/api/brief')`，把响应灌进现有渲染函数
-- sources 卡片点击 → `window.open(videoUrl)`
-- 加一个简单 loading 态（首次冷启动 LLM+TTS 大约 5–15 秒；二次访问秒开）
+设计中 **不要求用户输入**：摘要内容由内置清单驱动，以实现「打开即 hydrate」的体验。
 
 ---
 
-## 4. 接口契约
+## 3. 两层流水线（与缓存契约）
 
-```http
-GET /api/brief
-```
+系统将「播课文稿生成」与「语音合成」拆成两段，**各自的缓存互相独立**，便于单独失效与计价（LLM 与 Edge TTS 分离）。
 
-```jsonc
-{
-  "title": "今日通勤｜AI 编程工具与 Skill 清单",
-  "audioUrl": "/audio/morncast.mp3",
-  "totalSec": 240,
-  "chapters":        [{"start": 0,  "title": "开场"}],
-  "transcriptLines": [{"start": 0,  "text":  "早上好..."}],
-  "sources": [
-    {"id": "s1", "title": "强烈推荐6个自用skills", "snippet": "...",
-     "author": "抖音收藏", "thumb": "t1",
-     "videoUrl": "/videos/强烈推荐6个自用skills.mp4"}
-  ],
-  "recommendations": [
-    {"id": "r1", "title": "...", "author": "...", "snippet": "...", "thumb": "t2"}
-  ]
-}
-```
+### Layer 0：清单解析
 
----
+- **`load_manifest()`**：将 `video/` 下文本映射为结构化列表（每条含 `id`、`title`、`summary`、可选 `videoFile` 等）。
+- **无磁盘缓存层名称**；输出直接供 Layer 1 使用。
 
-## 5. 文件结构（改动后）
+### Layer 1：内容层（`build_script`）
 
-```
-agents-a3fcc025a1/
-├── server.py                # load_manifest + build_script + synthesize + GET /api/brief
-├── video/                   # 已有，内置数据源
-│   ├── title.txt
-│   ├── summary.txt
-│   └── *.mp4
-├── data/                    # 新增（不入 git）
-│   ├── script.json          # Layer 1 缓存：脚本+章节+推荐
-│   └── timing.json          # Layer 2 缓存：句级时间戳
-├── audio_cache/
-│   └── morncast.mp3         # Layer 2 缓存：音频，文件名固定
-└── frontend/index.html      # 删 demo 数据，改 fetch /api/brief
-```
+- **输入**：manifest 的子集（如参与脚本的前 N 条 + 不参与脚本的展示位）。
+- **输出**：标题、正文 `script`、`chapters`（按字符偏移）。
+- **缓存文件**： **`data/script.json`**。  
+  **命中策略**：文件存在即整段跳过 LLM，直接反序列化为脚本结构。
 
-**手工触发重算**：
+### Layer 2：语音层（`synthesize`）
 
-| 改了什么 | 删什么 |
-|---|---|
-| LLM Prompt / 摘要内容 | `data/script.json`（会顺带让 timing 也失效） |
-| 音色 / 语速 | `audio_cache/morncast.mp3` + `data/timing.json` |
-| 全部 | 上面三个全删 |
+- **输入**：Layer 1 的正文字符串。
+- **输出**：`totalSec`、句级 **`transcriptLines`**（时间戳 + 文本）。
+- **实现要点**：Edge TTS `Communicate.stream()`，当前从流中消费 **`SentenceBoundary`** 组装句级时间轴（实现细节以 `server.py` 为准）。
+- **缓存文件**：  
+  - **`audio_cache/morncast.mp3`**（固定文件名）  
+  - **`data/timing.json`**  
+  **命中策略**：**两个文件都存在**时才跳过 TTS，并只读取 `timing.json` 返回；任一缺失则重跑合成并覆盖。
+
+### 为何要分层缓存
+
+| 变更类型 | 建议失效 |
+|----------|----------|
+| 改摘要、改 Prompt、改 Layer 1 逻辑 | 删除 **`data/script.json`**（脚本变则下游音频意义也变，通常需一并清 Layer 2） |
+| 改音色 / 语速 / TTS、只重合成 | 删除 **`audio_cache/morncast.mp3`** 与 **`data/timing.json`**，保留 `script.json` 可节省 LLM 费用 |
+| 全量重算 | 上述三处均可删 |
 
 ---
 
-## 6. 开发顺序（一个下午搞定）
+## 4. HTTP 与静态资源
 
-1. **Layer 0 + Layer 1**（25 分钟）
-   - `load_manifest()` 解析 title.txt + summary.txt + 匹配 mp4
-   - `build_script()` + `data/script.json` 缓存
-   - 命令行单测一次：删缓存、跑 build_script、看 JSON 内容是否合理
-2. **Layer 2**（25 分钟）
-   - `synthesize()` 用 `Communicate.stream()` 收 WordBoundary
-   - `audio_cache/morncast.mp3` + `data/timing.json` 缓存
-   - 命令行单测：跑一次，确认 mp3 能播放、timing.json 里的秒数与音频对得上
-3. **接口拼装**（10 分钟）
-   - `GET /api/brief` 拼三层结果
-   - 挂载 `/videos/*` 静态目录
-4. **前端接通**（30 分钟）
-   - 删写死数据，加 fetch + loading
-   - sources 卡片加点击跳转
-5. **联调跑通**（10 分钟）
-   - 删全部 cache 冷启动一次
-   - 验证音频、文字稿高亮、章节、来源卡片都正常
+### 聚合接口
 
----
+**`GET /api/brief`**
 
-## 7. 暂不做（明确砍掉）
+- 串联：校验 `LLM_API_KEY` → `load_manifest` → `build_script` → `synthesize` → 将章节 `char_start` 转为时间轴上的 `start`（与当前 `server.py` 中 `chars_per_sec` 策略一致）。
+- 响应包含：`title`、`audioUrl`（固定指向 **`/audio/morncast.mp3`**）、`totalSec`、`chapters`、`transcriptLines`、`sources`、`recommendations` 等，供单页前端直接渲染。
 
-- ❌ 抖音链接 → 字幕提取
-- ❌ 视频缩略图截帧（继续用 t1–t4 色块）
-- ❌ 取消收藏的持久化
-- ❌ 错误重试 UI
+### 静态挂载（与路径约定）
+
+| 挂载路径 | 目录 | 用途 |
+|----------|------|------|
+| `/audio` | `audio_cache/` | TTS 输出 MP3 |
+| `/assets` | `frontend/assets/` | 前端子资源、**其它 Demo 的 `demos/{id}/`** |
+| `/videos` | `video/` | 原视频文件 |
+| `/pic` | `pic/`（若存在） | 封面等 |
+
+根路径 **`GET /`** 返回 **`frontend/index.html`**，实现前后端同源、相对路径 `/api/*` 与静态资源一致。
 
 ---
 
-请审核：这个方向（无感、cache-first、video 目录直读）对吗？没问题我就动手。
+## 5. 与「多主题静态 Demo」的关系（架构外缘）
+
+首页多 Tab 中，除走 **`/api/brief`** 的主线外，其它主题可完全由 **预生成物** 构成：
+
+- 生成端：`scripts/pregen_demo.py` + `scripts/demos/*.json` → 产出 **`frontend/assets/demos/{id}/meta.json`** 与 **`audio.mp3`**。
+- 运行时：前端仅 **`fetch('/assets/demos/{id}/meta.json')`**，**不经过**上述两层流水线。
+
+这属于 **离线构建 → 静态托管** 路径，与 **`/api/brief`** 的 **在线编排 + 缓存** 并行存在，共用同一前端壳与播放器能力。
+
+---
+
+## 6. 明确不在本后端范围内的能力
+
+以下为产品或后续迭代方向，**当前 `server.py` 不承担**：
+
+- 抖音链接拉取、在线字幕抓取、爬虫。
+- 用户账号、收藏状态的持久化与多端同步。
+- 视频缩略图实时截帧（当前可用占位 thumb 策略）。
+- 与 README 中可能提及的 **`POST /api/generate-brief`** 等接口：以仓库内 **`server.py` 实际路由** 为准。
+
+---
+
+## 7. 部署与运行时注意（架构约束）
+
+- **工作目录**：`load_dotenv()` 默认在进程 **CWD** 找 **`.env`**，宜在**项目根**启动 `uvicorn`，避免找不到配置与相对路径错乱。
+- **Edge TTS**：Layer 2 冷跑依赖本机或服务能访问 Edge TTS；部分网络环境不可用，实践中常依赖 **预生成缓存** 或 **`deploy.sh` 推送带缓存的目录**（部署脚本文档另行说明）。
+- **`data/`、`audio_cache/`**：通常不入版本库（见 `.gitignore`），在不同环境表现为「冷启动重新算」或「随部署包携带缓存」两种模式。
+
+---
+
+以上描述与仓库中 **`server.py` 代码** 一致；若实现变更，应以代码为准并同步修订本文。

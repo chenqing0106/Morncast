@@ -1,103 +1,56 @@
-# Morncast
+![first-photo](./images/first.png)
 
-把你收藏的抖音 AI 摘要，变成一段能在通勤路上听完的播客。
+**morncast**是一款面向总是“收藏了却没时间看”的人，在通勤路上，通过把收藏内容变成可直接收听的播客，用最低负担的方式完成信息消化。
 
-## 功能
+## 🚀 快速开始
 
-- 粘贴抖音视频 AI 摘要 → 自动生成播客脚本
-- TTS 合成音频，支持逐字稿高亮跟读
-- 章节大纲 + 进度跳转
-- 收藏来源管理 + 延伸推荐
-- 移动端竖屏优先设计
+### 1、手机扫码体验
 
-## 技术栈
+<div style="display: flex; align-items: center;">
+  <img src="./images/morncast-qr.png" width="200" style="margin-right: 60px;" />
+  <div>
+    <p>扫描左侧二维码即可快速体验morncast 😊</p>
+  </div>
+</div>
 
-| 层 | 技术 |
-|---|---|
-| 前端 | 原生 HTML / CSS / JS（单文件） |
-| 后端 | Python · FastAPI |
-| LLM | 火山引擎豆包（任何 OpenAI 兼容接口均可） |
-| TTS | Edge TTS（微软晓晓音色） |
+### 2、 本地部署
 
-## 快速开始
+> [!WARNING]
+> 本地部署我这边没跑通啊 😭 
 
-**1. 安装依赖**
+## 🏗️ 整体框架
 
-```bash
-python3.12 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-mkdir -p audio_cache
-```
+> [!WARNING]
+> 待写
 
-**2. 启动后端**
+## ✨ 产品功能
 
-```bash
-LLM_API_KEY=你的火山方舟APIKey \
-.venv/bin/uvicorn server:app --reload
-```
+<table align="center">
+  <tr align="center">
+    <th><p align="center"> · 零输入一键合成</p></th>
+    <th><p align="center"> · 现代播放器功能</p></th>
+    <th><p align="center"> · 内容溯源</p></th>
+    <th><p align="center"> · 延伸推荐</p></th>
+  </tr>
+  <tr>
+    <td align="center"><p align="center"><img src="./images/f1.PNG" width="180" height="400"></p></td>
+    <td align="center"><p align="center"><img src="./images/f2.gif" width="180" height="400"></p></td>
+    <td align="center"><p align="center"><img src="./images/f3.gif" width="180" height="400"></p></td>
+    <td align="center"><p align="center"><img src="./images/f4.gif" width="180" height="400"></p></td>
+  </tr>
+  <tr>
+    <td align="center">自动播客合成</td>
+    <td align="center">逐句高亮 + 章节跳转时长 + 播放速度调整 </td>
+    <td align="center">收藏来源管理</td>
+    <td align="center">收藏新的视频，利于后续播客内容的生成和推送</td>
+  </tr>
+</table>
 
-**3. 打开前端**
+## 📚 文档
 
-直接用浏览器打开 `index.html`，或用任意静态服务器托管。
+- 后端框架说明 [architecture](./docs/backend-plan.md)
+- 产品说明书 [prd](./docs/PRD.md)
 
-## 环境变量
 
-| 变量 | 默认值 | 说明 |
-|---|---|---|
-| `LLM_API_KEY` | 必填 | 大模型 API Key |
-| `LLM_BASE_URL` | `https://ark.cn-beijing.volces.com/api/v3` | 兼容 OpenAI 格式的接口地址 |
-| `LLM_MODEL` | `doubao-pro-32k` | 模型名称 |
 
-切换到其他模型示例：
 
-```bash
-# Qwen
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1 \
-LLM_MODEL=qwen-plus \
-LLM_API_KEY=你的Key \
-.venv/bin/uvicorn server:app --reload
-
-# DeepSeek
-LLM_BASE_URL=https://api.deepseek.com/v1 \
-LLM_MODEL=deepseek-chat \
-LLM_API_KEY=你的Key \
-.venv/bin/uvicorn server:app --reload
-```
-
-## API
-
-### `POST /api/generate-brief`
-
-**请求体**
-
-```json
-{
-  "summaries": [
-    "第一条抖音 AI 摘要文字",
-    "第二条抖音 AI 摘要文字"
-  ]
-}
-```
-
-**响应**
-
-```json
-{
-  "audioUrl": "http://localhost:8000/audio/abc123.mp3",
-  "totalSec": 82,
-  "chapters": [{ "start": 0, "title": "开场" }],
-  "transcriptLines": [{ "start": 0, "text": "早上好，欢迎收听 Morncast..." }],
-  "sources": [{ "id": "s1", "title": "视频标题", "snippet": "摘要", "author": "抖音", "thumb": "t1" }]
-}
-```
-
-## 目录结构
-
-```
-├── index.html        # 前端（单文件）
-├── server.py         # 后端 API
-├── requirements.txt  # Python 依赖
-├── audio_cache/      # TTS 生成的音频文件（运行时生成）
-└── assets/
-    └── hero-daily-brief.png
-```
