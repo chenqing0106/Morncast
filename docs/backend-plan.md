@@ -9,7 +9,7 @@
 | 关注点 | 说明 |
 |--------|------|
 | 运行时 | FastAPI 单进程：`server.py`，同步 HTTP + 异步 TTS 流式写入。 |
-| 入口 | **`GET /api/brief`**：主 Demo（「AI」主题）；其它主题走 **静态** `frontend/assets/demos/{id}/meta.json`（离线脚本生成，见文末）。 |
+| 入口 | **`GET /api/brief`**：唯一数据入口；前端直接请求并渲染。 |
 | 机密与配置 | `LLM_*`、`TTS_*` 经由 **环境变量 / `.env`**（`python-dotenv`）；不在前端或服务端硬编码 Key。 |
 
 ```mermaid
@@ -106,7 +106,7 @@ flowchart LR
 | 挂载路径 | 目录 | 用途 |
 |----------|------|------|
 | `/audio` | `audio_cache/` | TTS 输出 MP3 |
-| `/assets` | `frontend/assets/` | 前端子资源、**其它 Demo 的 `demos/{id}/`** |
+| `/assets` | `frontend/assets/` | 前端子资源（配图、字体等） |
 | `/videos` | `video/` | 原视频文件 |
 | `/pic` | `pic/`（若存在） | 封面等 |
 
@@ -114,18 +114,7 @@ flowchart LR
 
 ---
 
-## 5. 与「多主题静态 Demo」的关系（架构外缘）
-
-首页多 Tab 中，除走 **`/api/brief`** 的主线外，其它主题可完全由 **预生成物** 构成：
-
-- 生成端：`scripts/pregen_demo.py` + `scripts/demos/*.json` → 产出 **`frontend/assets/demos/{id}/meta.json`** 与 **`audio.mp3`**。
-- 运行时：前端仅 **`fetch('/assets/demos/{id}/meta.json')`**，**不经过**上述两层流水线。
-
-这属于 **离线构建 → 静态托管** 路径，与 **`/api/brief`** 的 **在线编排 + 缓存** 并行存在，共用同一前端壳与播放器能力。
-
----
-
-## 6. 明确不在本后端范围内的能力
+## 5. 明确不在本后端范围内的能力
 
 以下为产品或后续迭代方向，**当前 `server.py` 不承担**：
 
@@ -136,7 +125,7 @@ flowchart LR
 
 ---
 
-## 7. 部署与运行时注意（架构约束）
+## 6. 部署与运行时注意（架构约束）
 
 - **工作目录**：`load_dotenv()` 默认在进程 **CWD** 找 **`.env`**，宜在**项目根**启动 `uvicorn`，避免找不到配置与相对路径错乱。
 - **Edge TTS**：Layer 2 冷跑依赖本机或服务能访问 Edge TTS；部分网络环境不可用，实践中常依赖 **预生成缓存** 或 **`deploy.sh` 推送带缓存的目录**（部署脚本文档另行说明）。
