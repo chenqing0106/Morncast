@@ -6,12 +6,16 @@
 
 ### 1、手机扫码体验
 
-<div style="display: flex; align-items: center;">
-  <img src="./images/morncast-qr.png" width="200" style="margin-right: 60px;" />
-  <div>
-    <p>扫描左侧二维码即可快速体验morncast 😊</p>
-  </div>
-</div>
+<table>
+<tr>
+<td width="208" valign="middle">
+  <img src="./images/morncast-qr.png" width="200" alt="Morncast 体验二维码" />
+</td>
+<td valign="middle">
+  扫描左侧二维码即可快速体验 morncast 😊
+</td>
+</tr>
+</table>
 
 ### 2、 本地部署
 
@@ -25,25 +29,43 @@
 
 ## ✨ 产品功能
 
-<table align="center">
-  <tr align="center">
-    <th><p align="center"> · 零输入一键合成</p></th>
-    <th><p align="center"> · 现代播放器功能</p></th>
-    <th><p align="center"> · 内容溯源</p></th>
-    <th><p align="center"> · 延伸推荐</p></th>
-  </tr>
-  <tr>
-    <td align="center"><p align="center"><img src="./images/f1.PNG" width="180" height="400"></p></td>
-    <td align="center"><p align="center"><img src="./images/f2.gif" width="180" height="400"></p></td>
-    <td align="center"><p align="center"><img src="./images/f3.gif" width="180" height="400"></p></td>
-    <td align="center"><p align="center"><img src="./images/f4.gif" width="180" height="400"></p></td>
-  </tr>
-  <tr>
-    <td align="center">自动播客合成</td>
-    <td align="center">逐句高亮 + 章节跳转时长 + 播放速度调整 </td>
-    <td align="center">收藏来源管理</td>
-    <td align="center">收藏新的视频，利于后续播客内容的生成和推送</td>
-  </tr>
+<table align="center" width="100%">
+  <colgroup>
+    <col width="25%" />
+    <col width="25%" />
+    <col width="25%" />
+    <col width="25%" />
+  </colgroup>
+  <thead>
+    <tr align="center">
+      <th>· 零输入一键合成</th>
+      <th>· 现代播放器功能</th>
+      <th>· 内容溯源</th>
+      <th>· 延伸推荐</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle" height="400">
+        <img src="./images/f1.PNG" width="180" height="360" alt="零输入一键合成：自动播客合成" />
+      </td>
+      <td align="center" valign="middle" height="400">
+        <img src="./images/f2.gif" width="180" height="360" alt="现代播放器：逐句高亮与章节" />
+      </td>
+      <td align="center" valign="middle" height="400">
+        <img src="./images/f3.gif" width="180" height="360" alt="内容溯源：本期收录列表" />
+      </td>
+      <td align="center" valign="middle" height="400">
+        <img src="./images/f4.gif" width="180" height="360" alt="延伸推荐：猜你想听" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="top"><small>自动播客合成</small></td>
+      <td align="center" valign="top"><small>逐句高亮 / 章节跳转<br />时长刻度 · 播放倍速</small></td>
+      <td align="center" valign="top"><small>收藏来源管理</small></td>
+      <td align="center" valign="top"><small>收藏更多视频<br />便于后续生成与推送</small></td>
+    </tr>
+  </tbody>
 </table>
 
 ## 📚 文档
